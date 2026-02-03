@@ -79,9 +79,9 @@ export function ProjectDetailView() {
     })
   }, [projectAssignments, employees])
 
-  // Get expense for assignment
-  const getExpenseForAssignment = (employeeId: string, week: number, year: number) => {
-    return projectExpenses.find(
+  // Get all expenses for assignment (multiple allowed)
+  const getExpensesForAssignment = (employeeId: string, week: number, year: number) => {
+    return projectExpenses.filter(
       e => e.employeeId === employeeId && e.week === week && e.year === year
     )
   }
@@ -354,96 +354,75 @@ export function ProjectDetailView() {
                 </div>
                 <div className="divide-y">
                   {empAssignments.map(assignment => {
-                    const expense = getExpenseForAssignment(employee.id, assignment.week, assignment.year)
+                    const expenses = getExpensesForAssignment(employee.id, assignment.week, assignment.year)
+                    const expenseTotal = expenses.reduce((sum, e) => sum + e.amount, 0)
                     const isEditing = editingAssignment === assignment.id
 
                     return (
-                      <div key={assignment.id} className="p-3 flex items-center gap-4">
-                        <div className="w-20 text-sm font-medium">
-                          KW {assignment.week}/{assignment.year}
-                        </div>
+                      <div key={assignment.id} className="p-3">
+                        <div className="flex items-center gap-4">
+                          <div className="w-20 text-sm font-medium">
+                            KW {assignment.week}/{assignment.year}
+                          </div>
 
-                        {/* Hours */}
-                        <div className="flex items-center gap-2">
-                          {isEditing ? (
-                            <>
-                              <input
-                                type="number"
-                                value={editHours}
-                                onChange={(e) => setEditHours(parseInt(e.target.value) || 0)}
-                                className="w-16 p-1 border rounded text-sm"
-                                min={0}
-                                max={80}
-                              />
-                              <span className="text-sm text-muted-foreground">h</span>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6"
-                                onClick={() => handleSaveHours(assignment.id)}
-                              >
-                                <Save className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6"
-                                onClick={() => setEditingAssignment(null)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-sm">{assignment.hoursPlanned}h</span>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  setEditingAssignment(assignment.id)
-                                  setEditHours(assignment.hoursPlanned)
-                                }}
-                              >
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                          {/* Hours */}
+                          <div className="flex items-center gap-2">
+                            {isEditing ? (
+                              <>
+                                <input
+                                  type="number"
+                                  value={editHours}
+                                  onChange={(e) => setEditHours(parseInt(e.target.value) || 0)}
+                                  className="w-16 p-1 border rounded text-sm"
+                                  min={0}
+                                  max={80}
+                                />
+                                <span className="text-sm text-muted-foreground">h</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  onClick={() => handleSaveHours(assignment.id)}
+                                >
+                                  <Save className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  onClick={() => setEditingAssignment(null)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm">{assignment.hoursPlanned}h</span>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    setEditingAssignment(assignment.id)
+                                    setEditHours(assignment.hoursPlanned)
+                                  }}
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                              </>
+                            )}
+                          </div>
 
-                        <div className="flex-1" />
+                          <div className="flex-1" />
 
-                        {/* Travel Expense */}
-                        <div className="flex items-center gap-2">
-                          <Plane className="h-4 w-4 text-muted-foreground" />
-                          {expense ? (
-                            <div className="flex items-center gap-2">
+                          {/* Travel Expense Summary */}
+                          <div className="flex items-center gap-2">
+                            <Plane className="h-4 w-4 text-muted-foreground" />
+                            {expenses.length > 0 && (
                               <span className="text-sm font-medium">
-                                {expense.amount.toFixed(2)} €
+                                {expenseTotal.toFixed(2)} €
                               </span>
-                              {expense.importedFromConcur && (
-                                <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">
-                                  Concur
-                                </span>
-                              )}
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6"
-                                onClick={() => setEditingExpense(expense)}
-                              >
-                                <Edit2 className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-6 w-6 text-destructive"
-                                onClick={() => deleteTravelExpense(expense.id)}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          ) : (
+                            )}
                             <Button
                               size="sm"
                               variant="outline"
@@ -452,13 +431,52 @@ export function ProjectDetailView() {
                             >
                               + Reisekosten
                             </Button>
-                          )}
+                          </div>
+
+                          {/* Cost for this assignment */}
+                          <div className="w-24 text-right text-sm">
+                            {(assignment.hoursPlanned * employee.hourlyRate).toLocaleString('de-DE')} €
+                          </div>
                         </div>
 
-                        {/* Cost for this assignment */}
-                        <div className="w-24 text-right text-sm">
-                          {(assignment.hoursPlanned * employee.hourlyRate).toLocaleString('de-DE')} €
-                        </div>
+                        {/* Travel Expense List */}
+                        {expenses.length > 0 && (
+                          <div className="mt-2 ml-20 space-y-1">
+                            {expenses.map(expense => (
+                              <div
+                                key={expense.id}
+                                className="flex items-center gap-2 text-sm bg-muted/50 rounded px-2 py-1"
+                              >
+                                <span className="text-muted-foreground min-w-[80px]">
+                                  {expense.description || 'Reisekosten'}
+                                </span>
+                                <span className="font-medium">{expense.amount.toFixed(2)} €</span>
+                                {expense.importedFromConcur && (
+                                  <span className="text-xs bg-blue-100 text-blue-700 px-1 rounded">
+                                    Concur
+                                  </span>
+                                )}
+                                <div className="flex-1" />
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-5 w-5"
+                                  onClick={() => setEditingExpense(expense)}
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-5 w-5 text-destructive"
+                                  onClick={() => deleteTravelExpense(expense.id)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )
                   })}

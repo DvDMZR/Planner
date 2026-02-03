@@ -32,7 +32,13 @@ function StatCard({ title, value, subtitle, icon }: StatCardProps) {
 }
 
 export function StatsView() {
-  const { employees, projects, assignments, getProjectCost, getTeamUtilization } = useStore()
+  const { employees, projects, assignments, getProjectCost, getTeamUtilization, setCurrentView, setSelectedProject } = useStore()
+
+  // Navigate to project detail
+  const handleOpenProject = (projectId: string) => {
+    setSelectedProject(projectId)
+    setCurrentView('project-detail')
+  }
   const { week: currentWeek, year: currentYear } = getCurrentWeek()
 
   // Calculate stats
@@ -181,16 +187,17 @@ export function StatsView() {
             <h3 className="font-semibold mb-4">Projektkosten (Personalaufwand)</h3>
             <div className="space-y-3">
               {projectCosts.slice(0, 6).map((project) => (
-                <div
+                <button
                   key={project.id}
-                  className="flex items-center justify-between py-2 border-b last:border-0"
+                  onClick={() => handleOpenProject(project.id)}
+                  className="w-full flex items-center justify-between py-2 border-b last:border-0 hover:bg-accent/50 rounded px-2 -mx-2 transition-colors text-left"
                 >
                   <div className="flex items-center gap-2">
                     <div
                       className="h-3 w-3 rounded-full"
                       style={{ backgroundColor: project.color }}
                     />
-                    <span className="text-sm font-medium truncate max-w-[200px]">
+                    <span className="text-sm font-medium truncate max-w-[200px] hover:underline">
                       {project.name}
                     </span>
                   </div>
@@ -202,7 +209,7 @@ export function StatsView() {
                       {project.hoursTotal}h
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>

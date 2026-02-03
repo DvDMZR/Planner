@@ -235,19 +235,19 @@ export function ProjectTimeline() {
             <div className="min-w-max">
               {/* Header Row */}
               <div
-                className="grid sticky top-0 z-10 bg-card border-b"
+                className="grid sticky top-0 z-10 bg-card border-b border-border"
                 style={{
-                  gridTemplateColumns: `200px repeat(${weeks.length}, minmax(80px, 1fr))`
+                  gridTemplateColumns: `280px repeat(${weeks.length}, minmax(100px, 1fr))`
                 }}
               >
-                <div className="p-3 font-medium text-sm border-r bg-muted/50">
+                <div className="p-3 font-medium text-sm border-r border-border bg-muted/50">
                   Projekt
                 </div>
                 {weeks.map((week) => (
                   <div
                     key={`${week.year}-${week.week}`}
                     className={cn(
-                      "p-2 text-center text-sm border-r",
+                      "p-2 text-center text-sm border-r border-border",
                       week.isCurrentWeek && "bg-primary/10 font-semibold",
                       week.isPast && "bg-muted/30 text-muted-foreground"
                     )}
@@ -263,17 +263,17 @@ export function ProjectTimeline() {
                 const barStyle = getBarStyle(project)
 
                 return (
-                  <div key={project.id} className="border-b">
+                  <div key={project.id} className="border-b border-border">
                     {/* Project Bar Row */}
                     <div
                       className="grid relative"
                       style={{
-                        gridTemplateColumns: `200px repeat(${weeks.length}, minmax(80px, 1fr))`,
+                        gridTemplateColumns: `280px repeat(${weeks.length}, minmax(100px, 1fr))`,
                         minHeight: '60px'
                       }}
                     >
                       {/* Project Name Cell */}
-                      <div className="p-3 border-r bg-card flex items-center gap-2">
+                      <div className="p-3 border-r border-border bg-card flex items-center gap-2">
                         <div
                           className="h-3 w-3 rounded-full flex-shrink-0"
                           style={{ backgroundColor: project.color }}
@@ -333,7 +333,7 @@ export function ProjectTimeline() {
                         <div
                           key={`${project.id}-${week.year}-${week.week}`}
                           className={cn(
-                            "border-r",
+                            "border-r border-border",
                             week.isCurrentWeek && "bg-primary/5",
                             week.isPast && "bg-muted/20"
                           )}
@@ -357,10 +357,10 @@ export function ProjectTimeline() {
                     <div
                       className="grid bg-muted/20"
                       style={{
-                        gridTemplateColumns: `200px repeat(${weeks.length}, minmax(80px, 1fr))`
+                        gridTemplateColumns: `280px repeat(${weeks.length}, minmax(100px, 1fr))`
                       }}
                     >
-                      <div className="p-2 border-r text-xs text-muted-foreground flex items-center gap-1">
+                      <div className="p-2 border-r border-border text-xs text-muted-foreground flex items-center gap-1">
                         <Users className="h-3.5 w-3.5" />
                         Besetzung
                       </div>

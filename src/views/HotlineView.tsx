@@ -71,13 +71,6 @@ export function HotlineView() {
     })
   }
 
-  // Get employee hotline for week
-  const getEmployeeHotline = (employeeId: string, week: number, year: number) => {
-    return hotlineAssignments.find(
-      a => a.employeeId === employeeId && a.week === week && a.year === year
-    )
-  }
-
   // Get all hotline assignments for a team in a specific week
   const getTeamHotlineForWeek = (teamId: string, week: number, year: number) => {
     const teamEmployeeIds = employees.filter(e => e.teamId === teamId).map(e => e.id)
@@ -182,9 +175,9 @@ export function HotlineView() {
             <div className="flex items-center gap-3">
               <Phone className="h-6 w-6 text-primary" />
               <div>
-                <h2 className="text-xl font-bold">Hotline / 24/7 Bereitschaft</h2>
+                <h2 className="text-xl font-bold">24/7 Bereitschaft</h2>
                 <p className="text-sm text-muted-foreground">
-                  Mitarbeiter per Drag & Drop zuweisen - Team AS & CMS
+                  Mitarbeiter per Drag & Drop zuweisen
                 </p>
               </div>
             </div>
@@ -249,17 +242,17 @@ export function HotlineView() {
             </div>
           )}
 
-          {/* Timeline */}
+          {/* Timeline - simplified: one row per team */}
           <ScrollArea orientation="both" className="flex-1">
             <div className="min-w-max">
               {/* Week Headers */}
-              <div className="flex border-b bg-muted/50 sticky top-0 z-10">
-                <div className="w-56 flex-shrink-0 p-3 font-medium border-r">Mitarbeiter</div>
+              <div className="flex border-b border-border bg-muted/50 sticky top-0 z-10">
+                <div className="w-40 flex-shrink-0 p-3 font-medium border-r border-border">Team</div>
                 {weeks.map((weekData: WeekData) => (
                   <div
                     key={`${weekData.week}-${weekData.year}`}
                     className={cn(
-                      "w-24 flex-shrink-0 p-2 text-center text-xs border-r",
+                      "w-32 flex-shrink-0 p-2 text-center text-xs border-r border-border",
                       weekData.isCurrentWeek && "bg-primary/10 font-bold"
                     )}
                   >
@@ -269,87 +262,60 @@ export function HotlineView() {
                 ))}
               </div>
 
-              {/* Team Sections */}
+              {/* Team Rows */}
               {teamConfigs.map((team) => (
-                <div key={team.id}>
-                  {/* Team Header */}
-                  <div className="flex border-b bg-muted/30">
-                    <div className="w-56 flex-shrink-0 p-2 font-semibold text-sm border-r flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: team.color }}
-                      />
-                      {team.name} ({team.employees.length} Mitarbeiter)
-                    </div>
-                    {weeks.map((weekData: WeekData) => {
-                      const teamAssignments = getTeamHotlineForWeek(team.id, weekData.week, weekData.year)
-                      return (
-                        <div
-                          key={`${team.id}-header-${weekData.week}-${weekData.year}`}
-                          className={cn(
-                            "w-24 flex-shrink-0 p-1 text-center text-xs border-r",
-                            weekData.isCurrentWeek && "bg-primary/5"
-                          )}
-                        >
-                          {teamAssignments.length > 0 && (
-                            <span className="text-orange-600 font-medium">
-                              {teamAssignments.length}x 24/7
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
+                <div key={team.id} className="flex border-b border-border hover:bg-accent/30">
+                  <div className="w-40 flex-shrink-0 p-3 border-r border-border flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: team.color }}
+                    />
+                    <span className="font-medium">{team.name}</span>
                   </div>
+                  {weeks.map((weekData: WeekData) => {
+                    const teamAssignments = getTeamHotlineForWeek(team.id, weekData.week, weekData.year)
 
-                  {/* Employee Rows */}
-                  {team.employees.map((employee, index) => (
-                    <div key={employee.id} className="flex border-b hover:bg-accent/50">
-                      <div className="w-56 flex-shrink-0 p-2 border-r flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium truncate">{employee.name}</div>
-                          <div className="text-xs text-muted-foreground">Position #{index + 1}</div>
-                        </div>
-                      </div>
-                      {weeks.map((weekData: WeekData) => {
-                        const hasHotlineThisWeek = getEmployeeHotline(employee.id, weekData.week, weekData.year)
-
-                        return (
-                          <DroppableHotlineCell
-                            key={`${employee.id}-${weekData.week}-${weekData.year}`}
-                            week={weekData.week}
-                            year={weekData.year}
-                            isCurrentWeek={weekData.isCurrentWeek}
-                            onClick={() => handleCellClick(team.id, weekData.week, weekData.year)}
-                          >
-                            {hasHotlineThisWeek ? (
-                              <div className="group flex items-center justify-center">
-                                <div className="bg-orange-500 text-white rounded p-1 text-xs flex items-center gap-1">
-                                  <Phone className="h-3 w-3" />
-                                  <span>24/7</span>
+                    return (
+                      <DroppableHotlineCell
+                        key={`${team.id}-${weekData.week}-${weekData.year}`}
+                        teamId={team.id}
+                        week={weekData.week}
+                        year={weekData.year}
+                        isCurrentWeek={weekData.isCurrentWeek}
+                        onClick={() => handleCellClick(team.id, weekData.week, weekData.year)}
+                      >
+                        {teamAssignments.length > 0 ? (
+                          <div className="space-y-1">
+                            {teamAssignments.map(a => {
+                              const emp = employees.find(e => e.id === a.employeeId)
+                              const lastName = emp?.name.split(',')[0] || ''
+                              return (
+                                <div
+                                  key={a.id}
+                                  className="group bg-orange-500 text-white rounded px-2 py-1 text-xs flex items-center justify-between"
+                                >
+                                  <span className="truncate">24/7 {lastName}</span>
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      deleteAssignment(hasHotlineThisWeek.id)
+                                      deleteAssignment(a.id)
                                     }}
-                                    className="hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-white/20 hover:bg-white/40 ml-1"
+                                    className="hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-white/20 hover:bg-white/40 ml-1 flex-shrink-0"
                                   >
                                     <X className="h-3 w-3" />
                                   </button>
                                 </div>
-                              </div>
-                            ) : (
-                              <div className="h-full flex items-center justify-center opacity-0 hover:opacity-50">
-                                <Plus className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                            )}
-                          </DroppableHotlineCell>
-                        )
-                      })}
-                    </div>
-                  ))}
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div className="h-full flex items-center justify-center opacity-0 hover:opacity-50">
+                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </DroppableHotlineCell>
+                    )
+                  })}
                 </div>
               ))}
             </div>
@@ -379,7 +345,9 @@ export function HotlineView() {
             </DialogTitle>
           </DialogHeader>
           <div className="py-4 max-h-[400px] overflow-y-auto">
-            {teamConfigs.map(team => (
+            {teamConfigs
+              .filter(team => !selectedCell || selectedCell.team === team.id)
+              .map(team => (
               <div key={team.id} className="mb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <div
@@ -427,6 +395,7 @@ export function HotlineView() {
 
 // Droppable cell component for hotline
 interface DroppableHotlineCellProps {
+  teamId: string
   week: number
   year: number
   isCurrentWeek: boolean
@@ -435,6 +404,7 @@ interface DroppableHotlineCellProps {
 }
 
 function DroppableHotlineCell({
+  teamId,
   week,
   year,
   isCurrentWeek,
@@ -442,9 +412,10 @@ function DroppableHotlineCell({
   onClick
 }: DroppableHotlineCellProps) {
   const { isOver, setNodeRef } = useDroppable({
-    id: `hotline-${week}-${year}`,
+    id: `hotline-${teamId}-${week}-${year}`,
     data: {
       type: 'hotline-cell',
+      teamId,
       week,
       year
     }
@@ -455,7 +426,7 @@ function DroppableHotlineCell({
       ref={setNodeRef}
       onClick={onClick}
       className={cn(
-        "w-24 flex-shrink-0 p-1 border-r min-h-[48px] cursor-pointer transition-colors",
+        "w-32 flex-shrink-0 p-1 border-r border-border min-h-[60px] cursor-pointer transition-colors",
         isCurrentWeek && "bg-primary/5",
         isOver && "bg-orange-100 ring-2 ring-orange-500 ring-inset"
       )}

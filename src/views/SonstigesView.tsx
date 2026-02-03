@@ -152,10 +152,17 @@ export function SonstigesView() {
   // Create new task
   const handleCreateTask = () => {
     if (!newTaskTitle.trim()) return
+    const taskTitle = newTaskTitle.trim()
     setNewTaskTitle('')
     setIsCreateOpen(false)
     // Task will be created when first assignment is added
-    setSelectedTask(newTaskTitle.trim())
+    setSelectedTask(taskTitle)
+    // Set default week to current week
+    const currentWeek = weeks.find(w => w.isCurrentWeek) || weeks[0]
+    if (currentWeek) {
+      setSelectedWeek({ week: currentWeek.week, year: currentWeek.year })
+    }
+    setSelectedEmployees([])
     setIsAssignOpen(true)
   }
 

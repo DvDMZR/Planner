@@ -17,12 +17,12 @@ import type {
 } from './types'
 import { getCurrentWeek } from '../lib/date-utils'
 
-// Teams configuration
+// Teams configuration - GEA-inspired color scheme
 export const TEAMS: Team[] = [
-  { id: 'as', name: 'Team AS', color: '#3B82F6' },
-  { id: 'cms', name: 'Team CMS', color: '#10B981' },
-  { id: 'hm', name: 'Team HM', color: '#8B5CF6' },
-  { id: 'ic', name: 'Team I&C', color: '#F59E0B' }
+  { id: 'as', name: 'Team AS', color: '#0069B4' },      // GEA Blue
+  { id: 'cms', name: 'Team CMS', color: '#00A0B0' },    // Teal
+  { id: 'hm', name: 'Team HM', color: '#5C6F7B' },      // Steel Gray
+  { id: 'ic', name: 'Team I&C', color: '#E65100' }      // Orange accent
 ]
 
 // Standard work hours per week
