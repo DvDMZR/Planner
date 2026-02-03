@@ -75,6 +75,7 @@ const projectColors = [
   '#8B5CF6', // Purple
   '#F59E0B', // Amber
   '#EF4444', // Red
+  '#06B6D4', // Cyan
 ]
 
 // Projekte
@@ -134,6 +135,17 @@ export const mockProjects: Project[] = [
     endYear: currentYear,
     status: 'planned',
   },
+  {
+    id: 'proj-6',
+    name: 'Erstellung Trainingsunterlagen',
+    description: 'Dokumentation und Schulungsmaterial erstellen',
+    color: projectColors[5],
+    startWeek: currentWeek,
+    startYear: currentYear,
+    endWeek: currentWeek + 8,
+    endYear: currentYear,
+    status: 'active',
+  },
 ]
 
 // Zuweisungen generieren
@@ -141,11 +153,18 @@ function generateAssignments(): Assignment[] {
   const assignments: Assignment[] = []
   let assignmentId = 1
 
-  // 24/7 Rotation für Team AS - jeder macht eine Woche, dann der nächste
-  // Rotation über 24 Wochen vorausplanen
+  // Mitarbeiter die NUR 24/7 machen (keine Projekte)
+  // Wir nehmen die letzten 6 AS Mitarbeiter für 24/7 (Index 5-10)
+  const onlyDutyEmployees = asEmployeeIds.slice(5) // Krampe, Kristensen, Lubbers, Mechlinski, Oostdam, Valk
+
+  // Mitarbeiter die Projekte machen (keine 24/7)
+  // Die ersten 5 AS Mitarbeiter (Index 0-4)
+  const projectEmployeesAS = asEmployeeIds.slice(0, 5) // Cetinkilic, Dutka, Madsen, Antolik, Kleinheinrich
+
+  // 24/7 Rotation - NUR für onlyDutyEmployees
   for (let weekOffset = 0; weekOffset < 24; weekOffset++) {
-    const employeeIndex = weekOffset % asEmployeeIds.length
-    const employeeId = asEmployeeIds[employeeIndex]
+    const employeeIndex = weekOffset % onlyDutyEmployees.length
+    const employeeId = onlyDutyEmployees[employeeIndex]
 
     let week = currentWeek + weekOffset
     let year = currentYear
@@ -166,8 +185,33 @@ function generateAssignments(): Assignment[] {
     })
   }
 
-  // Projekt 1: Al Rawabi - 2 Personen aus AS
-  const proj1Team = [asEmployeeIds[0], asEmployeeIds[1]] // Cetinkilic, Dutka
+  // Training R9500 - alle 6 Wochen für einen AS Mitarbeiter (rotierend durch projectEmployeesAS)
+  for (let i = 0; i < 4; i++) { // 4 Trainings über 24 Wochen
+    const weekOffset = i * 6
+    const employeeIndex = i % projectEmployeesAS.length
+    const employeeId = projectEmployeesAS[employeeIndex]
+
+    let week = currentWeek + weekOffset
+    let year = currentYear
+    if (week > 52) {
+      week = week - 52
+      year++
+    }
+
+    assignments.push({
+      id: `assign-${assignmentId++}`,
+      employeeId,
+      eventType: 'training',
+      title: 'Training R9500',
+      week,
+      year,
+      hoursPlanned: 40,
+      notes: 'Wiederkehrendes Training alle 6 Wochen'
+    })
+  }
+
+  // Projekt 1: Al Rawabi - 2 Personen aus AS (die ohne 24/7)
+  const proj1Team = [projectEmployeesAS[0], projectEmployeesAS[1]] // Cetinkilic, Dutka
   for (let weekOffset = 0; weekOffset <= 6; weekOffset++) {
     let week = currentWeek + weekOffset
     let year = currentYear
@@ -264,6 +308,27 @@ function generateAssignments(): Assignment[] {
         projectId: 'proj-5',
         eventType: 'project',
         title: 'NL Schep DPQ',
+        week,
+        year,
+        hoursPlanned: 40
+      })
+    })
+  }
+
+  // Projekt 6: Erstellung Trainingsunterlagen - 3 Personen (1 AS, 1 CMS, 1 HM)
+  const proj6Team = [projectEmployeesAS[2], cmsEmployeeIds[6], hmEmployeeIds[1]] // Madsen, Berkensträter, Eismann
+  for (let weekOffset = 0; weekOffset <= 8; weekOffset++) {
+    let week = currentWeek + weekOffset
+    let year = currentYear
+    if (week > 52) { week -= 52; year++ }
+
+    proj6Team.forEach(empId => {
+      assignments.push({
+        id: `assign-${assignmentId++}`,
+        employeeId: empId,
+        projectId: 'proj-6',
+        eventType: 'project',
+        title: 'Erstellung Trainingsunterlagen',
         week,
         year,
         hoursPlanned: 40
