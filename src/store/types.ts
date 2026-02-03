@@ -18,11 +18,30 @@ export interface Employee {
   hourlyRate: number // For cost calculations
 }
 
-export type EventType = 'project' | 'recurring' | 'spontaneous' | 'training'
+export type EventType = 'project' | 'recurring' | 'spontaneous' | 'training' | 'sonstiges' | 'hotline' | 'backup'
+
+// Training categories
+export type TrainingCategory =
+  // AS Team Trainings
+  | 'R9500 I&C' | 'R9500 S&T' | 'F4500 I&C' | 'F4500 S&T' | 'DPQ'
+  // CMS Team Trainings
+  | 'T8900' | 'T8600' | 'DPX' | 'CowScout'
+  // HM Team Trainings
+  | 'DairyNet' | 'DairyPlan' | 'Good Cow Feeding' | 'Good Cow Milking'
+
+export interface Training {
+  id: string
+  name: TrainingCategory
+  description?: string
+  targetTeams: TeamId[] // Which teams can attend this training
+  requiredParticipants: number // How many people per training
+  color: string
+}
 
 export interface Project {
   id: string
   name: string
+  projectNumber: string // Auftragsnummer
   description: string
   color: string
   startWeek: number // Calendar week (KW)
@@ -33,10 +52,24 @@ export interface Project {
   budget?: number
 }
 
+export interface TravelExpense {
+  id: string
+  assignmentId: string
+  employeeId: string
+  projectId: string
+  week: number
+  year: number
+  amount: number
+  description?: string
+  importedFromConcur?: boolean
+  createdAt: string
+}
+
 export interface Assignment {
   id: string
   employeeId: string
   projectId?: string // Optional - for non-project events
+  trainingId?: string // For training assignments
   eventType: EventType
   title: string // For non-project events
   week: number // Calendar week
@@ -62,11 +95,35 @@ export interface EmployeeAvailability {
 }
 
 // View state
-export type ViewType = 'people' | 'projects' | 'stats' | 'settings'
+export type ViewType = 'people' | 'projects' | 'trainings' | 'hotline' | 'sonstiges' | 'stats' | 'settings' | 'project-detail'
 
 export interface TimelineSettings {
   showPastWeeks: boolean
   weeksToShow: number
   startFromWeek: number
   startFromYear: number
+}
+
+export interface AppSettings {
+  defaultHourlyRate: number
+}
+
+// Invoice related
+export interface InvoiceLineItem {
+  description: string
+  quantity: number
+  unitPrice: number
+  total: number
+}
+
+export interface ProjectInvoice {
+  projectId: string
+  projectNumber: string
+  projectName: string
+  generatedAt: string
+  laborItems: InvoiceLineItem[]
+  travelExpenses: TravelExpense[]
+  totalLabor: number
+  totalTravel: number
+  grandTotal: number
 }

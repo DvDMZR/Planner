@@ -21,14 +21,20 @@ const EVENT_COLORS: Record<string, string> = {
   project: '', // Will use project color
   recurring: '#F59E0B',
   spontaneous: '#EC4899',
-  training: '#06B6D4'
+  training: '#06B6D4',
+  sonstiges: '#64748B',
+  hotline: '#F97316',
+  backup: '#8B5CF6'
 }
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
   project: 'Projekt',
   recurring: 'Wiederkehrend',
   spontaneous: 'Spontan',
-  training: 'Training'
+  training: 'Training',
+  sonstiges: 'Sonstiges',
+  hotline: 'Hotline/24/7',
+  backup: 'Backup'
 }
 
 export function PeopleTimeline() {
@@ -55,7 +61,7 @@ export function PeopleTimeline() {
   } | null>(null)
   const [newTask, setNewTask] = useState({
     title: '',
-    eventType: 'spontaneous' as EventType,
+    eventType: 'sonstiges' as EventType,
     hoursPlanned: 40,
     notes: ''
   })
@@ -138,7 +144,7 @@ export function PeopleTimeline() {
     })
     setNewTask({
       title: '',
-      eventType: 'spontaneous',
+      eventType: 'sonstiges',
       hoursPlanned: 40,
       notes: ''
     })
@@ -318,7 +324,7 @@ export function PeopleTimeline() {
                                   <span className="truncate flex-1">
                                     {getAssignmentLabel(assignment)}
                                   </span>
-                                  {assignment.eventType !== 'project' && (
+                                  {assignment.eventType !== 'project' && assignment.eventType !== 'hotline' && (
                                     <button
                                       onClick={(e) => handleDeleteAssignment(assignment.id, e)}
                                       className="hidden group-hover/item:flex h-4 w-4 items-center justify-center rounded-full bg-white/20 hover:bg-white/40"
@@ -391,7 +397,7 @@ export function PeopleTimeline() {
               <div className="space-y-2">
                 <label className="text-sm font-medium">Typ</label>
                 <div className="flex gap-2 flex-wrap">
-                  {(['spontaneous', 'recurring', 'training'] as EventType[]).map((type) => (
+                  {(['sonstiges', 'recurring', 'training'] as EventType[]).map((type) => (
                     <button
                       key={type}
                       onClick={() => setNewTask({ ...newTask, eventType: type })}

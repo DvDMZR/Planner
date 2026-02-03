@@ -1,4 +1,4 @@
-import { Users, FolderKanban, BarChart3, Settings, Calendar } from 'lucide-react'
+import { Users, FolderKanban, BarChart3, Settings, Calendar, GraduationCap, Phone, FileQuestion } from 'lucide-react'
 import { cn } from '../lib/utils'
 import { useStore } from '../store/useStore'
 import type { ViewType } from '../store/types'
@@ -12,12 +12,15 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: 'people', label: 'Mitarbeiterplanung', icon: <Users className="h-5 w-5" /> },
   { id: 'projects', label: 'Projekte', icon: <FolderKanban className="h-5 w-5" /> },
+  { id: 'trainings', label: 'Trainings', icon: <GraduationCap className="h-5 w-5" /> },
+  { id: 'hotline', label: 'Hotline / 24/7', icon: <Phone className="h-5 w-5" /> },
+  { id: 'sonstiges', label: 'Sonstiges', icon: <FileQuestion className="h-5 w-5" /> },
   { id: 'stats', label: 'Statistiken', icon: <BarChart3 className="h-5 w-5" /> },
   { id: 'settings', label: 'Einstellungen', icon: <Settings className="h-5 w-5" /> },
 ]
 
 export function Sidebar() {
-  const { currentView, setCurrentView } = useStore()
+  const { currentView, setCurrentView, employees } = useStore()
 
   return (
     <aside className="w-64 border-r bg-card flex flex-col">
@@ -59,7 +62,7 @@ export function Sidebar() {
       {/* Footer */}
       <div className="p-4 border-t">
         <div className="text-xs text-muted-foreground">
-          <p>30 Mitarbeiter</p>
+          <p>{employees.length} Mitarbeiter</p>
           <p>4 Teams</p>
         </div>
       </div>

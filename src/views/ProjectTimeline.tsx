@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { DndContext, DragOverlay, pointerWithin } from '@dnd-kit/core'
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core'
-import { Plus, Users, X, MoreHorizontal, Trash2, GripVertical } from 'lucide-react'
+import { Plus, Users, X, MoreHorizontal, Trash2, GripVertical, ExternalLink } from 'lucide-react'
 import { useStore, TEAMS } from '../store/useStore'
 import { TimelineHeader } from '../components/TimelineHeader'
 import { StaffingPopover } from '../components/StaffingPopover'
@@ -36,7 +36,9 @@ export function ProjectTimeline() {
     addProject,
     deleteProject,
     removeEmployeeFromProjectWeek,
-    assignEmployeeToProject
+    assignEmployeeToProject,
+    setCurrentView,
+    setSelectedProject
   } = useStore()
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -44,6 +46,7 @@ export function ProjectTimeline() {
   const [showEmployeePanel, setShowEmployeePanel] = useState(true)
   const [newProject, setNewProject] = useState({
     name: '',
+    projectNumber: '',
     description: '',
     startWeek: timelineSettings.startFromWeek,
     startYear: timelineSettings.startFromYear,
@@ -98,8 +101,10 @@ export function ProjectTimeline() {
   }
 
   const handleCreateProject = () => {
+    const projectNumber = newProject.projectNumber || `PRJ-${new Date().getFullYear()}-${String(projects.length + 1).padStart(3, '0')}`
     addProject({
       name: newProject.name,
+      projectNumber,
       description: newProject.description,
       color: newProject.color,
       startWeek: newProject.startWeek,
@@ -111,6 +116,7 @@ export function ProjectTimeline() {
     setIsAddDialogOpen(false)
     setNewProject({
       name: '',
+      projectNumber: '',
       description: '',
       startWeek: timelineSettings.startFromWeek,
       startYear: timelineSettings.startFromYear,
@@ -118,6 +124,12 @@ export function ProjectTimeline() {
       endYear: timelineSettings.startFromYear,
       color: PROJECT_COLORS[Math.floor(Math.random() * PROJECT_COLORS.length)]
     })
+  }
+
+  // Navigate to project detail
+  const handleOpenProject = (projectId: string) => {
+    setSelectedProject(projectId)
+    setCurrentView('project-detail')
   }
 
   // Drag and Drop handlers
@@ -266,26 +278,43 @@ export function ProjectTimeline() {
                           className="h-3 w-3 rounded-full flex-shrink-0"
                           style={{ backgroundColor: project.color }}
                         />
-                        <div className="min-w-0">
-                          <div className="font-medium text-sm truncate">{project.name}</div>
-                          <Badge
-                            variant={
-                              project.status === 'active' ? 'success' :
-                              project.status === 'completed' ? 'secondary' :
-                              project.status === 'on-hold' ? 'warning' : 'outline'
-                            }
-                            className="text-xs"
+                        <div className="min-w-0 flex-1">
+                          <button
+                            onClick={() => handleOpenProject(project.id)}
+                            className="font-medium text-sm truncate hover:text-primary hover:underline text-left block w-full"
                           >
-                            {project.status}
-                          </Badge>
+                            {project.name}
+                          </button>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-xs text-muted-foreground">{project.projectNumber}</span>
+                            <Badge
+                              variant={
+                                project.status === 'active' ? 'success' :
+                                project.status === 'completed' ? 'secondary' :
+                                project.status === 'on-hold' ? 'warning' : 'outline'
+                              }
+                              className="text-xs"
+                            >
+                              {project.status}
+                            </Badge>
+                          </div>
                         </div>
                         <Popover>
                           <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 ml-auto">
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-40 p-1">
+                          <PopoverContent className="w-48 p-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full justify-start gap-2"
+                              onClick={() => handleOpenProject(project.id)}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              Details & Kosten
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -441,15 +470,27 @@ export function ProjectTimeline() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Projektname</label>
-              <input
-                type="text"
-                value={newProject.name}
-                onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
-                className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="z.B. E-Commerce Relaunch"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Projektname</label>
+                <input
+                  type="text"
+                  value={newProject.name}
+                  onChange={(e) => setNewProject({ ...newProject, name: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="z.B. UK Heath T89"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Auftragsnummer</label>
+                <input
+                  type="text"
+                  value={newProject.projectNumber}
+                  onChange={(e) => setNewProject({ ...newProject, projectNumber: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="z.B. PRJ-2026-007"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

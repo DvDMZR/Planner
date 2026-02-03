@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { RefreshCw, Trash2, Download, Upload, Database } from 'lucide-react'
+import { RefreshCw, Trash2, Download, Upload, Database, Euro } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { useStore } from '../store/useStore'
 import {
@@ -17,7 +17,9 @@ export function SettingsView() {
     projects,
     assignments,
     timelineSettings,
+    appSettings,
     updateTimelineSettings,
+    updateAppSettings,
     initializeWithMockData,
     clearAllData
   } = useStore()
@@ -109,6 +111,38 @@ export function SettingsView() {
                 />
                 <div className="w-11 h-6 bg-muted peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-ring rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
               </label>
+            </div>
+          </div>
+        </section>
+
+        {/* Cost Settings */}
+        <section className="bg-card rounded-lg border p-6 mb-6">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Euro className="h-5 w-5" />
+            Kosteneinstellungen
+          </h3>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Standard-Stundensatz</p>
+                <p className="text-sm text-muted-foreground">
+                  Wird für neue Mitarbeiter verwendet
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={appSettings.defaultHourlyRate}
+                  onChange={(e) =>
+                    updateAppSettings({ defaultHourlyRate: parseInt(e.target.value) || 0 })
+                  }
+                  className="w-24 h-10 px-3 rounded-md border bg-background text-right"
+                  min={0}
+                  max={500}
+                />
+                <span className="text-muted-foreground">€/h</span>
+              </div>
             </div>
           </div>
         </section>

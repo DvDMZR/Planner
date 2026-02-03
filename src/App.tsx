@@ -2,8 +2,12 @@ import { useEffect } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { ProjectTimeline } from './views/ProjectTimeline'
 import { PeopleTimeline } from './views/PeopleTimeline'
+import { TrainingsView } from './views/TrainingsView'
+import { HotlineView } from './views/HotlineView'
+import { SonstigesView } from './views/SonstigesView'
 import { StatsView } from './views/StatsView'
 import { SettingsView } from './views/SettingsView'
+import { ProjectDetailView } from './views/ProjectDetailView'
 import { useStore } from './store/useStore'
 import { TooltipProvider } from './components/ui/tooltip'
 
@@ -23,10 +27,18 @@ function App() {
         return <ProjectTimeline />
       case 'people':
         return <PeopleTimeline />
+      case 'trainings':
+        return <TrainingsView />
+      case 'hotline':
+        return <HotlineView />
+      case 'sonstiges':
+        return <SonstigesView />
       case 'stats':
         return <StatsView />
       case 'settings':
         return <SettingsView />
+      case 'project-detail':
+        return <ProjectDetailView />
       default:
         return <ProjectTimeline />
     }

@@ -58,7 +58,7 @@ export function StatsView() {
 
     // Total project costs
     const totalProjectCosts = projects.reduce(
-      (sum, p) => sum + getProjectCost(p.id),
+      (sum, p) => sum + getProjectCost(p.id).total,
       0
     )
 
@@ -91,7 +91,7 @@ export function StatsView() {
           .filter((a) => a.projectId === project.id)
           .reduce((sum, a) => sum + a.hoursPlanned, 0)
       }))
-      .sort((a, b) => b.cost - a.cost)
+      .sort((a, b) => b.cost.total - a.cost.total)
   }, [projects, assignments, getProjectCost])
 
   return (
@@ -196,7 +196,7 @@ export function StatsView() {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-medium">
-                      {project.cost.toLocaleString('de-DE')} €
+                      {project.cost.total.toLocaleString('de-DE')} €
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {project.hoursTotal}h

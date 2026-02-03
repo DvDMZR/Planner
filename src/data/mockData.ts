@@ -1,4 +1,4 @@
-import type { Employee, Project, Assignment } from '../store/types'
+import type { Employee, Project, Assignment, Training, TrainingCategory } from '../store/types'
 import { getCurrentWeek } from '../lib/date-utils'
 
 const { week: currentWeek, year: currentYear } = getCurrentWeek()
@@ -68,6 +68,26 @@ const cmsEmployeeIds = mockEmployees.filter(e => e.teamId === 'cms').map(e => e.
 const hmEmployeeIds = mockEmployees.filter(e => e.teamId === 'hm').map(e => e.id)
 const icEmployeeIds = mockEmployees.filter(e => e.teamId === 'ic').map(e => e.id)
 
+// Training definitions
+export const mockTrainings: Training[] = [
+  // AS Team Trainings (also for I&C on I&C trainings)
+  { id: 'training-1', name: 'R9500 I&C', targetTeams: ['as', 'ic'], requiredParticipants: 2, color: '#3B82F6' },
+  { id: 'training-2', name: 'R9500 S&T', targetTeams: ['as'], requiredParticipants: 2, color: '#60A5FA' },
+  { id: 'training-3', name: 'F4500 I&C', targetTeams: ['as', 'ic'], requiredParticipants: 2, color: '#2563EB' },
+  { id: 'training-4', name: 'F4500 S&T', targetTeams: ['as'], requiredParticipants: 2, color: '#1D4ED8' },
+  { id: 'training-5', name: 'DPQ', targetTeams: ['as'], requiredParticipants: 2, color: '#1E40AF' },
+  // CMS Team Trainings
+  { id: 'training-6', name: 'T8900', targetTeams: ['cms'], requiredParticipants: 2, color: '#10B981' },
+  { id: 'training-7', name: 'T8600', targetTeams: ['cms'], requiredParticipants: 2, color: '#34D399' },
+  { id: 'training-8', name: 'DPX', targetTeams: ['cms'], requiredParticipants: 2, color: '#059669' },
+  { id: 'training-9', name: 'CowScout', targetTeams: ['cms'], requiredParticipants: 2, color: '#047857' },
+  // HM Team Trainings
+  { id: 'training-10', name: 'DairyNet', targetTeams: ['hm'], requiredParticipants: 1, color: '#8B5CF6' },
+  { id: 'training-11', name: 'DairyPlan', targetTeams: ['hm'], requiredParticipants: 1, color: '#A78BFA' },
+  { id: 'training-12', name: 'Good Cow Feeding', targetTeams: ['hm'], requiredParticipants: 1, color: '#7C3AED' },
+  { id: 'training-13', name: 'Good Cow Milking', targetTeams: ['hm'], requiredParticipants: 1, color: '#6D28D9' },
+]
+
 // Project colors
 const projectColors = [
   '#3B82F6', // Blue
@@ -78,11 +98,12 @@ const projectColors = [
   '#06B6D4', // Cyan
 ]
 
-// Projekte
+// Projekte - jetzt mit Projektnummer
 export const mockProjects: Project[] = [
   {
     id: 'proj-1',
     name: 'Al Rawabi 80 T89',
+    projectNumber: 'PRJ-2026-001',
     description: 'Install T86 / Peripherie',
     color: projectColors[0],
     startWeek: currentWeek,
@@ -94,6 +115,7 @@ export const mockProjects: Project[] = [
   {
     id: 'proj-2',
     name: 'UK Heath T89',
+    projectNumber: 'PRJ-2026-002',
     description: 'Install T86 / Peripherie',
     color: projectColors[1],
     startWeek: currentWeek + 2,
@@ -105,6 +127,7 @@ export const mockProjects: Project[] = [
   {
     id: 'proj-3',
     name: 'UK Allwood T89 72',
+    projectNumber: 'PRJ-2026-003',
     description: 'Install T86 / Peripherie',
     color: projectColors[2],
     startWeek: currentWeek + 1,
@@ -116,6 +139,7 @@ export const mockProjects: Project[] = [
   {
     id: 'proj-4',
     name: 'BE Cools Dairy DPQ80',
+    projectNumber: 'PRJ-2026-004',
     description: 'Install Rotary / Peripherie',
     color: projectColors[3],
     startWeek: currentWeek,
@@ -127,6 +151,7 @@ export const mockProjects: Project[] = [
   {
     id: 'proj-5',
     name: 'NL Schep DPQ',
+    projectNumber: 'PRJ-2026-005',
     description: 'Install Rotary / Peripherie',
     color: projectColors[4],
     startWeek: currentWeek + 3,
@@ -138,6 +163,7 @@ export const mockProjects: Project[] = [
   {
     id: 'proj-6',
     name: 'Erstellung Trainingsunterlagen',
+    projectNumber: 'PRJ-2026-006',
     description: 'Dokumentation und Schulungsmaterial erstellen',
     color: projectColors[5],
     startWeek: currentWeek,
@@ -148,74 +174,174 @@ export const mockProjects: Project[] = [
   },
 ]
 
+// Helper function to calculate week/year with overflow
+function getWeekYear(baseWeek: number, baseYear: number, offsetWeeks: number): { week: number; year: number } {
+  let week = baseWeek + offsetWeeks
+  let year = baseYear
+  while (week > 52) {
+    week -= 52
+    year++
+  }
+  while (week < 1) {
+    week += 52
+    year--
+  }
+  return { week, year }
+}
+
 // Zuweisungen generieren
 function generateAssignments(): Assignment[] {
   const assignments: Assignment[] = []
   let assignmentId = 1
 
-  // Mitarbeiter die NUR 24/7 machen (keine Projekte)
-  // Wir nehmen die letzten 6 AS Mitarbeiter für 24/7 (Index 5-10)
-  const onlyDutyEmployees = asEmployeeIds.slice(5) // Krampe, Kristensen, Lubbers, Mechlinski, Oostdam, Valk
+  // ========== 24/7 ROTATION für ALLE AS Mitarbeiter ==========
+  // Fixe Reihenfolge, ein Mitarbeiter pro Woche, nichts anderes wenn 24/7
+  const hotlineWeeks = new Set<string>() // Track which employee has 24/7 which week
 
-  // Mitarbeiter die Projekte machen (keine 24/7)
-  // Die ersten 5 AS Mitarbeiter (Index 0-4)
-  const projectEmployeesAS = asEmployeeIds.slice(0, 5) // Cetinkilic, Dutka, Madsen, Antolik, Kleinheinrich
+  for (let weekOffset = 0; weekOffset < 52; weekOffset++) { // Ein Jahr voraus planen
+    const employeeIndex = weekOffset % asEmployeeIds.length
+    const employeeId = asEmployeeIds[employeeIndex]
+    const { week, year } = getWeekYear(currentWeek, currentYear, weekOffset)
 
-  // 24/7 Rotation - NUR für onlyDutyEmployees
-  for (let weekOffset = 0; weekOffset < 24; weekOffset++) {
-    const employeeIndex = weekOffset % onlyDutyEmployees.length
-    const employeeId = onlyDutyEmployees[employeeIndex]
-
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) {
-      week = week - 52
-      year++
-    }
+    // Track this week for this employee
+    hotlineWeeks.add(`${employeeId}-${week}-${year}`)
 
     assignments.push({
       id: `assign-${assignmentId++}`,
       employeeId,
-      eventType: 'recurring',
+      eventType: 'hotline',
       title: '24/7 Bereitschaft',
       week,
       year,
       hoursPlanned: 40,
-      notes: 'Wöchentliche Rotation'
+      notes: `Rotation Position ${employeeIndex + 1}`
     })
   }
 
-  // Training R9500 - alle 6 Wochen für einen AS Mitarbeiter (rotierend durch projectEmployeesAS)
-  for (let i = 0; i < 4; i++) { // 4 Trainings über 24 Wochen
-    const weekOffset = i * 6
-    const employeeIndex = i % projectEmployeesAS.length
-    const employeeId = projectEmployeesAS[employeeIndex]
+  // ========== TRAININGS ==========
+  // Helper to check if employee has 24/7 that week
+  const hasHotline = (empId: string, week: number, year: number) =>
+    hotlineWeeks.has(`${empId}-${week}-${year}`)
 
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) {
-      week = week - 52
-      year++
-    }
-
-    assignments.push({
-      id: `assign-${assignmentId++}`,
-      employeeId,
-      eventType: 'training',
-      title: 'Training R9500',
-      week,
-      year,
-      hoursPlanned: 40,
-      notes: 'Wiederkehrendes Training alle 6 Wochen'
-    })
+  // Helper to find available employees for training
+  const findAvailableEmployees = (
+    teamIds: string[],
+    week: number,
+    year: number,
+    count: number,
+    usedThisWeek: Set<string>
+  ): string[] => {
+    const available = teamIds.filter(id =>
+      !hasHotline(id, week, year) && !usedThisWeek.has(id)
+    )
+    return available.slice(0, count)
   }
 
-  // Projekt 1: Al Rawabi - 2 Personen aus AS (die ohne 24/7)
-  const proj1Team = [projectEmployeesAS[0], projectEmployeesAS[1]] // Cetinkilic, Dutka
+  // Training schedule: 3-4 trainings per year, spread across ~13 weeks each
+  // We'll schedule them at weeks: currentWeek+2, +15, +28, +41
+
+  const trainingOffsets = [2, 15, 28, 41] // Spread across the year
+
+  // AS Team Trainings (R9500 I&C, R9500 S&T, F4500 I&C, F4500 S&T, DPQ) - 2 persons each
+  const asTrainingNames: TrainingCategory[] = ['R9500 I&C', 'R9500 S&T', 'F4500 I&C', 'F4500 S&T', 'DPQ']
+
+  asTrainingNames.forEach((trainingName, trainingIndex) => {
+    const isICTraining = trainingName.includes('I&C')
+    const eligibleEmployees = isICTraining
+      ? [...asEmployeeIds, ...icEmployeeIds]
+      : asEmployeeIds
+
+    trainingOffsets.forEach((offset, scheduleIndex) => {
+      // Stagger each training type by a few weeks
+      const actualOffset = offset + trainingIndex
+      const { week, year } = getWeekYear(currentWeek, currentYear, actualOffset)
+      const usedThisWeek = new Set<string>()
+
+      // Find 2 available employees
+      const participants = findAvailableEmployees(eligibleEmployees, week, year, 2, usedThisWeek)
+
+      participants.forEach(empId => {
+        usedThisWeek.add(empId)
+        assignments.push({
+          id: `assign-${assignmentId++}`,
+          employeeId: empId,
+          eventType: 'training',
+          title: trainingName,
+          week,
+          year,
+          hoursPlanned: 40,
+          notes: `Training ${scheduleIndex + 1}/4 im Jahr`
+        })
+      })
+    })
+  })
+
+  // CMS Team Trainings (T8900, T8600, DPX, CowScout) - 2 persons each
+  const cmsTrainingNames: TrainingCategory[] = ['T8900', 'T8600', 'DPX', 'CowScout']
+
+  cmsTrainingNames.forEach((trainingName, trainingIndex) => {
+    trainingOffsets.forEach((offset, scheduleIndex) => {
+      const actualOffset = offset + trainingIndex + 1 // Slight offset from AS trainings
+      const { week, year } = getWeekYear(currentWeek, currentYear, actualOffset)
+      const usedThisWeek = new Set<string>()
+
+      // CMS doesn't have 24/7, so all are available
+      const participants = cmsEmployeeIds.slice(
+        (scheduleIndex * 2) % cmsEmployeeIds.length,
+        (scheduleIndex * 2) % cmsEmployeeIds.length + 2
+      )
+
+      participants.forEach(empId => {
+        usedThisWeek.add(empId)
+        assignments.push({
+          id: `assign-${assignmentId++}`,
+          employeeId: empId,
+          eventType: 'training',
+          title: trainingName,
+          week,
+          year,
+          hoursPlanned: 40,
+          notes: `Training ${scheduleIndex + 1}/4 im Jahr`
+        })
+      })
+    })
+  })
+
+  // HM Team Trainings (DairyNet, DairyPlan, Good Cow Feeding, Good Cow Milking) - 1 person each
+  const hmTrainingNames: TrainingCategory[] = ['DairyNet', 'DairyPlan', 'Good Cow Feeding', 'Good Cow Milking']
+
+  hmTrainingNames.forEach((trainingName, trainingIndex) => {
+    trainingOffsets.forEach((offset, scheduleIndex) => {
+      const actualOffset = offset + trainingIndex + 2 // Offset from other trainings
+      const { week, year } = getWeekYear(currentWeek, currentYear, actualOffset)
+
+      // Pick one HM employee
+      const empIndex = (trainingIndex + scheduleIndex) % hmEmployeeIds.length
+      const empId = hmEmployeeIds[empIndex]
+
+      assignments.push({
+        id: `assign-${assignmentId++}`,
+        employeeId: empId,
+        eventType: 'training',
+        title: trainingName,
+        week,
+        year,
+        hoursPlanned: 40,
+        notes: `Training ${scheduleIndex + 1}/4 im Jahr`
+      })
+    })
+  })
+
+  // ========== PROJEKTE ==========
+  // Only assign employees to projects if they don't have 24/7 that week
+
+  // Projekt 1: Al Rawabi - 2 Personen aus AS (check for 24/7 conflicts)
   for (let weekOffset = 0; weekOffset <= 6; weekOffset++) {
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) { week -= 52; year++ }
+    const { week, year } = getWeekYear(currentWeek, currentYear, weekOffset)
+
+    // Find 2 AS employees without 24/7 this week
+    const availableAS = asEmployeeIds.filter(id => !hasHotline(id, week, year))
+    const proj1Team = availableAS.slice(0, 2)
 
     proj1Team.forEach(empId => {
       assignments.push({
@@ -231,12 +357,10 @@ function generateAssignments(): Assignment[] {
     })
   }
 
-  // Projekt 2: UK Heath - 3 Personen aus CMS
-  const proj2Team = [cmsEmployeeIds[0], cmsEmployeeIds[1], cmsEmployeeIds[2]] // Meulenbeek, Pauly, Penning
+  // Projekt 2: UK Heath - 3 Personen aus CMS (no 24/7 conflict for CMS)
+  const proj2Team = [cmsEmployeeIds[0], cmsEmployeeIds[1], cmsEmployeeIds[2]]
   for (let weekOffset = 2; weekOffset <= 8; weekOffset++) {
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) { week -= 52; year++ }
+    const { week, year } = getWeekYear(currentWeek, currentYear, weekOffset)
 
     proj2Team.forEach(empId => {
       assignments.push({
@@ -253,11 +377,9 @@ function generateAssignments(): Assignment[] {
   }
 
   // Projekt 3: UK Allwood - 2 Personen aus I&C
-  const proj3Team = [icEmployeeIds[0], icEmployeeIds[1]] // Bachand, Carrie
+  const proj3Team = [icEmployeeIds[0], icEmployeeIds[1]]
   for (let weekOffset = 1; weekOffset <= 5; weekOffset++) {
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) { week -= 52; year++ }
+    const { week, year } = getWeekYear(currentWeek, currentYear, weekOffset)
 
     proj3Team.forEach(empId => {
       assignments.push({
@@ -274,11 +396,9 @@ function generateAssignments(): Assignment[] {
   }
 
   // Projekt 4: BE Cools Dairy - 1 Person aus HM, 1 aus CMS
-  const proj4Team = [hmEmployeeIds[0], cmsEmployeeIds[5]] // Weymann, Venne
+  const proj4Team = [hmEmployeeIds[0], cmsEmployeeIds[5]]
   for (let weekOffset = 0; weekOffset <= 4; weekOffset++) {
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) { week -= 52; year++ }
+    const { week, year } = getWeekYear(currentWeek, currentYear, weekOffset)
 
     proj4Team.forEach(empId => {
       assignments.push({
@@ -295,11 +415,9 @@ function generateAssignments(): Assignment[] {
   }
 
   // Projekt 5: NL Schep - 2 Personen aus I&C
-  const proj5Team = [icEmployeeIds[2], icEmployeeIds[3]] // Ricken, Mecking
+  const proj5Team = [icEmployeeIds[2], icEmployeeIds[3]]
   for (let weekOffset = 3; weekOffset <= 7; weekOffset++) {
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) { week -= 52; year++ }
+    const { week, year } = getWeekYear(currentWeek, currentYear, weekOffset)
 
     proj5Team.forEach(empId => {
       assignments.push({
@@ -315,12 +433,15 @@ function generateAssignments(): Assignment[] {
     })
   }
 
-  // Projekt 6: Erstellung Trainingsunterlagen - 3 Personen (1 AS, 1 CMS, 1 HM)
-  const proj6Team = [projectEmployeesAS[2], cmsEmployeeIds[6], hmEmployeeIds[1]] // Madsen, Berkensträter, Eismann
+  // Projekt 6: Erstellung Trainingsunterlagen - 3 Personen (1 AS ohne 24/7, 1 CMS, 1 HM)
   for (let weekOffset = 0; weekOffset <= 8; weekOffset++) {
-    let week = currentWeek + weekOffset
-    let year = currentYear
-    if (week > 52) { week -= 52; year++ }
+    const { week, year } = getWeekYear(currentWeek, currentYear, weekOffset)
+
+    // Find an AS employee without 24/7 this week
+    const availableAS = asEmployeeIds.filter(id => !hasHotline(id, week, year))
+    const asEmp = availableAS[2] || availableAS[0] // Prefer index 2 if available
+
+    const proj6Team = [asEmp, cmsEmployeeIds[6], hmEmployeeIds[1]]
 
     proj6Team.forEach(empId => {
       assignments.push({
