@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { UserPlus, Check, AlertTriangle, Search } from 'lucide-react'
+import { UserPlus, Check, AlertTriangle, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from './ui/popover'
 import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
@@ -13,18 +13,22 @@ interface StaffingPopoverProps {
   year: number
   trigger?: React.ReactNode
   onStaffAdded?: () => void
+  allowWeekSelection?: boolean
 }
 
 export function StaffingPopover({
   projectId,
-  week,
-  year,
+  week: initialWeek,
+  year: initialYear,
   trigger,
-  onStaffAdded
+  onStaffAdded,
+  allowWeekSelection = true
 }: StaffingPopoverProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null)
+  const [selectedWeek, setSelectedWeek] = useState(initialWeek)
+  const [selectedYear, setSelectedYear] = useState(initialYear)
 
   const {
     getEmployeeAvailability,
@@ -32,19 +36,45 @@ export function StaffingPopover({
     assignments
   } = useStore()
 
-  // Get availability for this week
+  // Reset week when opening
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      setSelectedWeek(initialWeek)
+      setSelectedYear(initialYear)
+    }
+    setOpen(isOpen)
+  }
+
+  // Navigate weeks
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    let newWeek = selectedWeek + (direction === 'next' ? 1 : -1)
+    let newYear = selectedYear
+
+    if (newWeek > 52) {
+      newWeek = 1
+      newYear++
+    } else if (newWeek < 1) {
+      newWeek = 52
+      newYear--
+    }
+
+    setSelectedWeek(newWeek)
+    setSelectedYear(newYear)
+  }
+
+  // Get availability for selected week
   const availability = useMemo(() => {
-    return getEmployeeAvailability(week, year)
-  }, [getEmployeeAvailability, week, year])
+    return getEmployeeAvailability(selectedWeek, selectedYear)
+  }, [getEmployeeAvailability, selectedWeek, selectedYear])
 
   // Get already assigned employees for this project/week
   const alreadyAssigned = useMemo(() => {
     return new Set(
       assignments
-        .filter(a => a.projectId === projectId && a.week === week && a.year === year)
+        .filter(a => a.projectId === projectId && a.week === selectedWeek && a.year === selectedYear)
         .map(a => a.employeeId)
     )
-  }, [assignments, projectId, week, year])
+  }, [assignments, projectId, selectedWeek, selectedYear])
 
   // Filter and sort employees
   const filteredEmployees = useMemo(() => {
@@ -81,7 +111,7 @@ export function StaffingPopover({
   }, [availability, search, selectedTeam, alreadyAssigned])
 
   const handleAssign = (employee: Employee) => {
-    assignEmployeeToProject(employee.id, projectId, week, year, 40)
+    assignEmployeeToProject(employee.id, projectId, selectedWeek, selectedYear, 40)
     onStaffAdded?.()
   }
 
@@ -90,7 +120,7 @@ export function StaffingPopover({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         {trigger || (
           <Button variant="ghost" size="sm" className="h-7 gap-1">
@@ -102,8 +132,34 @@ export function StaffingPopover({
       <PopoverContent className="w-80 p-0" align="start">
         <div className="p-3 border-b">
           <h4 className="font-medium text-sm mb-2">
-            Mitarbeiter zuweisen - KW {week}
+            Mitarbeiter zuweisen
           </h4>
+
+          {/* Week selector */}
+          {allowWeekSelection && (
+            <div className="flex items-center justify-between mb-3 bg-muted/50 rounded-md p-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => navigateWeek('prev')}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-center">
+                <div className="font-medium text-sm">KW {selectedWeek}</div>
+                <div className="text-xs text-muted-foreground">{selectedYear}</div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => navigateWeek('next')}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
 
           {/* Search */}
           <div className="relative">

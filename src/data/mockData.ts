@@ -1,4 +1,4 @@
-import type { Employee, Project, Assignment, Training, TrainingCategory } from '../store/types'
+import type { Employee, Project, Assignment, Training, TrainingCategory, ProjectCategory } from '../store/types'
 import { getCurrentWeek } from '../lib/date-utils'
 
 const { week: currentWeek, year: currentYear } = getCurrentWeek()
@@ -98,14 +98,16 @@ const projectColors = [
   '#06B6D4', // Cyan
 ]
 
-// Projekte - jetzt mit Projektnummer
+// Projekte - jetzt mit Projektnummer und Kategorie
 export const mockProjects: Project[] = [
+  // T89/T86 Projects
   {
     id: 'proj-1',
     name: 'Al Rawabi 80 T89',
     projectNumber: 'PRJ-2026-001',
     description: 'Install T86 / Peripherie',
     color: projectColors[0],
+    category: 'T89/T86' as ProjectCategory,
     startWeek: currentWeek,
     startYear: currentYear,
     endWeek: currentWeek + 6,
@@ -117,7 +119,8 @@ export const mockProjects: Project[] = [
     name: 'UK Heath T89',
     projectNumber: 'PRJ-2026-002',
     description: 'Install T86 / Peripherie',
-    color: projectColors[1],
+    color: projectColors[0],
+    category: 'T89/T86' as ProjectCategory,
     startWeek: currentWeek + 2,
     startYear: currentYear,
     endWeek: currentWeek + 8,
@@ -129,19 +132,22 @@ export const mockProjects: Project[] = [
     name: 'UK Allwood T89 72',
     projectNumber: 'PRJ-2026-003',
     description: 'Install T86 / Peripherie',
-    color: projectColors[2],
+    color: projectColors[0],
+    category: 'T89/T86' as ProjectCategory,
     startWeek: currentWeek + 1,
     startYear: currentYear,
     endWeek: currentWeek + 5,
     endYear: currentYear,
     status: 'planned',
   },
+  // DPQ Projects
   {
     id: 'proj-4',
     name: 'BE Cools Dairy DPQ80',
     projectNumber: 'PRJ-2026-004',
     description: 'Install Rotary / Peripherie',
     color: projectColors[3],
+    category: 'DPQ' as ProjectCategory,
     startWeek: currentWeek,
     startYear: currentYear,
     endWeek: currentWeek + 4,
@@ -153,19 +159,49 @@ export const mockProjects: Project[] = [
     name: 'NL Schep DPQ',
     projectNumber: 'PRJ-2026-005',
     description: 'Install Rotary / Peripherie',
-    color: projectColors[4],
+    color: projectColors[3],
+    category: 'DPQ' as ProjectCategory,
     startWeek: currentWeek + 3,
     startYear: currentYear,
     endWeek: currentWeek + 7,
     endYear: currentYear,
     status: 'planned',
   },
+  // R95/R96 Projects
+  {
+    id: 'proj-7',
+    name: 'FR Dubois R96 24er',
+    projectNumber: 'PRJ-2026-007',
+    description: 'Install R96 24er Karussell',
+    color: projectColors[1],
+    category: 'R95/R96' as ProjectCategory,
+    startWeek: currentWeek + 1,
+    startYear: currentYear,
+    endWeek: currentWeek + 5,
+    endYear: currentYear,
+    status: 'planned',
+  },
+  {
+    id: 'proj-8',
+    name: 'DE Müller R95 36er',
+    projectNumber: 'PRJ-2026-008',
+    description: 'Install R95 36er Karussell',
+    color: projectColors[1],
+    category: 'R95/R96' as ProjectCategory,
+    startWeek: currentWeek + 4,
+    startYear: currentYear,
+    endWeek: currentWeek + 10,
+    endYear: currentYear,
+    status: 'planned',
+  },
+  // Sonstiges
   {
     id: 'proj-6',
     name: 'Erstellung Trainingsunterlagen',
     projectNumber: 'PRJ-2026-006',
     description: 'Dokumentation und Schulungsmaterial erstellen',
     color: projectColors[5],
+    category: 'Sonstiges' as ProjectCategory,
     startWeek: currentWeek,
     startYear: currentYear,
     endWeek: currentWeek + 8,

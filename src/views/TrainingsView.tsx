@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { DndContext, DragOverlay, pointerWithin } from '@dnd-kit/core'
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core'
-import { GraduationCap, ChevronLeft, ChevronRight, Plus, X, GripVertical, Users } from 'lucide-react'
+import { GraduationCap, ChevronLeft, ChevronRight, ChevronDown, Plus, X, GripVertical, Users } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { useStore, TEAMS } from '../store/useStore'
 import { generateWeeksArray } from '../lib/date-utils'
@@ -70,6 +70,34 @@ export function TrainingsView() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedTraining, setSelectedTraining] = useState<{ name: string; week: number; year: number } | null>(null)
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(new Set())
+
+  // Toggle group collapse
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(groupId)) {
+        next.delete(groupId)
+      } else {
+        next.add(groupId)
+      }
+      return next
+    })
+  }
+
+  // Toggle team collapse in sidebar
+  const toggleTeam = (teamId: string) => {
+    setCollapsedTeams(prev => {
+      const next = new Set(prev)
+      if (next.has(teamId)) {
+        next.delete(teamId)
+      } else {
+        next.add(teamId)
+      }
+      return next
+    })
+  }
 
   const weeks = useMemo(() =>
     generateWeeksArray(
@@ -251,29 +279,47 @@ export function TrainingsView() {
                 </h3>
               </div>
               <ScrollArea className="flex-1">
-                <div className="p-2 space-y-3">
-                  {TEAMS.map(team => (
-                    <div key={team.id}>
-                      <div className="flex items-center gap-2 px-2 py-1 mb-1">
-                        <div
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: team.color }}
-                        />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {team.name}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {employeesByTeam[team.id]?.map(employee => (
-                          <DraggableEmployee
-                            key={employee.id}
-                            employee={employee}
-                            compact
+                <div className="p-2 space-y-1">
+                  {TEAMS.map(team => {
+                    const isCollapsed = collapsedTeams.has(team.id)
+                    const teamEmployees = employeesByTeam[team.id] || []
+
+                    return (
+                      <div key={team.id}>
+                        <button
+                          onClick={() => toggleTeam(team.id)}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent"
+                        >
+                          {isCollapsed ? (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <div
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: team.color }}
                           />
-                        ))}
+                          <span className="text-xs font-medium">
+                            {team.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            ({teamEmployees.length})
+                          </span>
+                        </button>
+                        {!isCollapsed && (
+                          <div className="ml-4 space-y-1 mt-1">
+                            {teamEmployees.map(employee => (
+                              <DraggableEmployee
+                                key={employee.id}
+                                employee={employee}
+                                compact
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </ScrollArea>
             </div>
@@ -300,11 +346,22 @@ export function TrainingsView() {
               </div>
 
               {/* Training Groups */}
-              {TRAINING_GROUPS.map((group) => (
+              {TRAINING_GROUPS.map((group) => {
+                const isCollapsed = collapsedGroups.has(group.team)
+
+                return (
                 <div key={group.team}>
                   {/* Group Header */}
-                  <div className="flex border-b bg-muted/30">
+                  <button
+                    onClick={() => toggleGroup(group.team)}
+                    className="flex w-full border-b bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
                     <div className="w-48 flex-shrink-0 p-2 font-semibold text-sm border-r flex items-center gap-2">
+                      {isCollapsed ? (
+                        <ChevronRight className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: TEAMS.find(t => t.id === group.team)?.color }}
@@ -317,10 +374,10 @@ export function TrainingsView() {
                         className="w-28 flex-shrink-0 border-r"
                       />
                     ))}
-                  </div>
+                  </button>
 
                   {/* Training Rows */}
-                  {group.trainings.map((trainingName) => (
+                  {!isCollapsed && group.trainings.map((trainingName) => (
                     <div key={trainingName} className="flex border-b hover:bg-accent/50">
                       <div className="w-48 flex-shrink-0 p-2 border-r flex items-center gap-2">
                         <div
@@ -373,7 +430,7 @@ export function TrainingsView() {
                     </div>
                   ))}
                 </div>
-              ))}
+              )})}
             </div>
           </ScrollArea>
         </div>

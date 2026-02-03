@@ -263,6 +263,18 @@ export function SettingsView() {
             <p>Version 1.0.0</p>
             <p>React + Vite + Tailwind CSS + Zustand</p>
           </div>
+
+          {/* Impressum */}
+          <div className="mt-6 pt-6 border-t">
+            <h4 className="font-semibold mb-2">Impressum</h4>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">David Mazur</p>
+              <p>Entwicklung und Konzeption</p>
+              <p className="mt-2 text-xs">
+                © {new Date().getFullYear()} Alle Rechte vorbehalten.
+              </p>
+            </div>
+          </div>
         </section>
       </div>
 

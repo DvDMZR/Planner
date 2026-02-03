@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { DndContext, DragOverlay, pointerWithin } from '@dnd-kit/core'
 import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core'
-import { Plus, Users, X, MoreHorizontal, Trash2, GripVertical, ExternalLink } from 'lucide-react'
+import { Plus, Users, X, MoreHorizontal, Trash2, GripVertical, ExternalLink, ChevronDown, ChevronRight, Edit2 } from 'lucide-react'
 import { useStore, TEAMS } from '../store/useStore'
 import { TimelineHeader } from '../components/TimelineHeader'
 import { StaffingPopover } from '../components/StaffingPopover'
@@ -20,11 +20,19 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover'
 import { cn } from '../lib/utils'
 import { generateWeeksArray } from '../lib/date-utils'
-import type { Project, Employee } from '../store/types'
+import type { Project, Employee, ProjectCategory } from '../store/types'
 
 // Project colors for new projects
 const PROJECT_COLORS = [
-  '#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899'
+  '#0069B4', '#00A0B0', '#5C6F7B', '#E65100', '#8B5CF6', '#06B6D4', '#EC4899'
+]
+
+// Project categories for grouping
+const PROJECT_CATEGORIES: { id: ProjectCategory; name: string; color: string }[] = [
+  { id: 'R95/R96', name: 'R95/R96', color: '#0069B4' },
+  { id: 'DPQ', name: 'DPQ', color: '#E65100' },
+  { id: 'T89/T86', name: 'T89/T86', color: '#00A0B0' },
+  { id: 'Sonstiges', name: 'Sonstiges', color: '#5C6F7B' },
 ]
 
 export function ProjectTimeline() {
@@ -34,6 +42,7 @@ export function ProjectTimeline() {
     employees,
     timelineSettings,
     addProject,
+    updateProject,
     deleteProject,
     removeEmployeeFromProjectWeek,
     assignEmployeeToProject,
@@ -42,12 +51,17 @@ export function ProjectTimeline() {
   } = useStore()
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [activeEmployee, setActiveEmployee] = useState<Employee | null>(null)
   const [showEmployeePanel, setShowEmployeePanel] = useState(true)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set())
+  const [collapsedTeams, setCollapsedTeams] = useState<Set<string>>(new Set())
   const [newProject, setNewProject] = useState({
     name: '',
     projectNumber: '',
     description: '',
+    category: 'Sonstiges' as ProjectCategory,
     startWeek: timelineSettings.startFromWeek,
     startYear: timelineSettings.startFromYear,
     endWeek: timelineSettings.startFromWeek + 4,
@@ -64,6 +78,23 @@ export function ProjectTimeline() {
       timelineSettings.showPastWeeks
     )
   }, [timelineSettings])
+
+  // Group projects by category
+  const projectsByCategory = useMemo(() => {
+    const grouped: Record<ProjectCategory, Project[]> = {
+      'R95/R96': [],
+      'DPQ': [],
+      'T89/T86': [],
+      'Sonstiges': []
+    }
+
+    projects.forEach(project => {
+      const category = project.category || 'Sonstiges'
+      grouped[category].push(project)
+    })
+
+    return grouped
+  }, [projects])
 
   // Get assigned employees for a project week
   const getAssignedForWeek = (projectId: string, week: number, year: number) => {
@@ -107,6 +138,7 @@ export function ProjectTimeline() {
       projectNumber,
       description: newProject.description,
       color: newProject.color,
+      category: newProject.category,
       startWeek: newProject.startWeek,
       startYear: newProject.startYear,
       endWeek: newProject.endWeek,
@@ -118,6 +150,7 @@ export function ProjectTimeline() {
       name: '',
       projectNumber: '',
       description: '',
+      category: 'Sonstiges',
       startWeek: timelineSettings.startFromWeek,
       startYear: timelineSettings.startFromYear,
       endWeek: timelineSettings.startFromWeek + 4,
@@ -126,10 +159,59 @@ export function ProjectTimeline() {
     })
   }
 
+  const handleEditProject = (project: Project) => {
+    setEditingProject({ ...project })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSaveProject = () => {
+    if (!editingProject) return
+    updateProject(editingProject.id, {
+      name: editingProject.name,
+      projectNumber: editingProject.projectNumber,
+      description: editingProject.description,
+      color: editingProject.color,
+      category: editingProject.category,
+      startWeek: editingProject.startWeek,
+      startYear: editingProject.startYear,
+      endWeek: editingProject.endWeek,
+      endYear: editingProject.endYear,
+      status: editingProject.status
+    })
+    setIsEditDialogOpen(false)
+    setEditingProject(null)
+  }
+
   // Navigate to project detail
   const handleOpenProject = (projectId: string) => {
     setSelectedProject(projectId)
     setCurrentView('project-detail')
+  }
+
+  // Toggle group collapse
+  const toggleGroup = (groupId: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev)
+      if (next.has(groupId)) {
+        next.delete(groupId)
+      } else {
+        next.add(groupId)
+      }
+      return next
+    })
+  }
+
+  // Toggle team collapse
+  const toggleTeam = (teamId: string) => {
+    setCollapsedTeams(prev => {
+      const next = new Set(prev)
+      if (next.has(teamId)) {
+        next.delete(teamId)
+      } else {
+        next.add(teamId)
+      }
+      return next
+    })
   }
 
   // Drag and Drop handlers
@@ -163,6 +245,184 @@ export function ProjectTimeline() {
     return grouped
   }, [employees])
 
+  // Render a single project row
+  const renderProjectRow = (project: Project) => {
+    const barStyle = getBarStyle(project)
+
+    return (
+      <div key={project.id} className="border-b border-border">
+        {/* Project Bar Row */}
+        <div
+          className="grid relative"
+          style={{
+            gridTemplateColumns: `280px repeat(${weeks.length}, minmax(100px, 1fr))`,
+            minHeight: '60px'
+          }}
+        >
+          {/* Project Name Cell */}
+          <div className="p-3 border-r border-border bg-card flex items-center gap-2">
+            <div
+              className="h-3 w-3 rounded-full flex-shrink-0"
+              style={{ backgroundColor: project.color }}
+            />
+            <div className="min-w-0 flex-1">
+              <button
+                onClick={() => handleOpenProject(project.id)}
+                className="font-medium text-sm truncate hover:text-primary hover:underline text-left block w-full"
+              >
+                {project.name}
+              </button>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-xs text-muted-foreground">{project.projectNumber}</span>
+                <Badge
+                  variant={
+                    project.status === 'active' ? 'success' :
+                    project.status === 'completed' ? 'secondary' :
+                    project.status === 'on-hold' ? 'warning' : 'outline'
+                  }
+                  className="text-xs"
+                >
+                  {project.status}
+                </Badge>
+              </div>
+            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-48 p-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={() => handleEditProject(project)}
+                >
+                  <Edit2 className="h-4 w-4" />
+                  Bearbeiten
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2"
+                  onClick={() => handleOpenProject(project.id)}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Details & Kosten
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start gap-2 text-destructive"
+                  onClick={() => deleteProject(project.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Löschen
+                </Button>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {/* Week Cells (background) */}
+          {weeks.map((week) => (
+            <div
+              key={`${project.id}-${week.year}-${week.week}`}
+              className={cn(
+                "border-r border-border",
+                week.isCurrentWeek && "bg-primary/5",
+                week.isPast && "bg-muted/20"
+              )}
+            />
+          ))}
+
+          {/* Project Bar (overlay) */}
+          {barStyle && (
+            <div
+              className="absolute top-2 bottom-2 rounded-md flex items-center px-3 cursor-pointer hover:ring-2 hover:ring-ring transition-all"
+              style={barStyle}
+            >
+              <span className="text-white text-sm font-medium truncate">
+                {project.name}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Staffing Row - NOW allows ANY week, not just project range */}
+        <div
+          className="grid bg-muted/20"
+          style={{
+            gridTemplateColumns: `280px repeat(${weeks.length}, minmax(100px, 1fr))`
+          }}
+        >
+          <div className="p-2 border-r border-border text-xs text-muted-foreground flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            Besetzung
+          </div>
+          {weeks.map((week) => {
+            const assigned = getAssignedForWeek(project.id, week.week, week.year)
+
+            return (
+              <DroppableWeekCell
+                key={`staff-${project.id}-${week.year}-${week.week}`}
+                id={`drop-${project.id}-${week.year}-${week.week}`}
+                projectId={project.id}
+                week={week.week}
+                year={week.year}
+                isInRange={true}
+                isCurrentWeek={week.isCurrentWeek}
+              >
+                <div className="flex flex-wrap gap-1">
+                  {/* Assigned employees */}
+                  {assigned.map(({ assignment, employee }) => (
+                    <div
+                      key={assignment.id}
+                      className="group relative flex items-center gap-1 bg-card rounded px-1.5 py-0.5 text-xs border"
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{
+                          backgroundColor: TEAMS.find(t => t.id === employee.teamId)?.color
+                        }}
+                      />
+                      <span className="truncate max-w-[60px]">
+                        {employee.name.split(',')[0]}
+                      </span>
+                      <button
+                        onClick={() => removeEmployeeFromProjectWeek(
+                          employee.id,
+                          project.id,
+                          week.week,
+                          week.year
+                        )}
+                        className="hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Add button */}
+                  <StaffingPopover
+                    projectId={project.id}
+                    week={week.week}
+                    year={week.year}
+                    trigger={
+                      <button className="h-6 w-6 rounded border border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
+                    }
+                  />
+                </div>
+              </DroppableWeekCell>
+            )
+          })}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <DndContext
       onDragStart={handleDragStart}
@@ -189,7 +449,7 @@ export function ProjectTimeline() {
         </div>
 
         <div className="flex-1 flex overflow-hidden">
-          {/* Employee Panel for Drag & Drop */}
+          {/* Employee Panel for Drag & Drop - Collapsible by Team */}
           {showEmployeePanel && (
             <div className="w-56 border-r bg-card flex flex-col overflow-hidden">
               <div className="p-3 border-b bg-muted/50">
@@ -202,29 +462,47 @@ export function ProjectTimeline() {
                 </p>
               </div>
               <ScrollArea className="flex-1">
-                <div className="p-2 space-y-3">
-                  {TEAMS.map(team => (
-                    <div key={team.id}>
-                      <div className="flex items-center gap-2 px-2 py-1 mb-1">
-                        <div
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: team.color }}
-                        />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {team.name}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {employeesByTeam[team.id]?.map(employee => (
-                          <DraggableEmployee
-                            key={employee.id}
-                            employee={employee}
-                            compact
+                <div className="p-2 space-y-1">
+                  {TEAMS.map(team => {
+                    const isCollapsed = collapsedTeams.has(team.id)
+                    const teamEmployees = employeesByTeam[team.id] || []
+
+                    return (
+                      <div key={team.id}>
+                        <button
+                          onClick={() => toggleTeam(team.id)}
+                          className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent"
+                        >
+                          {isCollapsed ? (
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <div
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: team.color }}
                           />
-                        ))}
+                          <span className="text-xs font-medium">
+                            {team.name}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            ({teamEmployees.length})
+                          </span>
+                        </button>
+                        {!isCollapsed && (
+                          <div className="ml-4 space-y-1 mt-1">
+                            {teamEmployees.map(employee => (
+                              <DraggableEmployee
+                                key={employee.id}
+                                employee={employee}
+                                compact
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </ScrollArea>
             </div>
@@ -258,179 +536,37 @@ export function ProjectTimeline() {
                 ))}
               </div>
 
-              {/* Project Rows */}
-              {projects.map((project) => {
-                const barStyle = getBarStyle(project)
+              {/* Project Groups */}
+              {PROJECT_CATEGORIES.map((category) => {
+                const categoryProjects = projectsByCategory[category.id]
+                if (categoryProjects.length === 0) return null
+
+                const isCollapsed = collapsedGroups.has(category.id)
 
                 return (
-                  <div key={project.id} className="border-b border-border">
-                    {/* Project Bar Row */}
-                    <div
-                      className="grid relative"
-                      style={{
-                        gridTemplateColumns: `280px repeat(${weeks.length}, minmax(100px, 1fr))`,
-                        minHeight: '60px'
-                      }}
+                  <div key={category.id}>
+                    {/* Group Header */}
+                    <button
+                      onClick={() => toggleGroup(category.id)}
+                      className="w-full flex items-center gap-2 px-4 py-2 bg-muted/50 border-b border-border hover:bg-muted/70 transition-colors"
                     >
-                      {/* Project Name Cell */}
-                      <div className="p-3 border-r border-border bg-card flex items-center gap-2">
-                        <div
-                          className="h-3 w-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: project.color }}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <button
-                            onClick={() => handleOpenProject(project.id)}
-                            className="font-medium text-sm truncate hover:text-primary hover:underline text-left block w-full"
-                          >
-                            {project.name}
-                          </button>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs text-muted-foreground">{project.projectNumber}</span>
-                            <Badge
-                              variant={
-                                project.status === 'active' ? 'success' :
-                                project.status === 'completed' ? 'secondary' :
-                                project.status === 'on-hold' ? 'warning' : 'outline'
-                              }
-                              className="text-xs"
-                            >
-                              {project.status}
-                            </Badge>
-                          </div>
-                        </div>
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-48 p-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start gap-2"
-                              onClick={() => handleOpenProject(project.id)}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Details & Kosten
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start gap-2 text-destructive"
-                              onClick={() => deleteProject(project.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Löschen
-                            </Button>
-                          </PopoverContent>
-                        </Popover>
-                      </div>
-
-                      {/* Week Cells (background) */}
-                      {weeks.map((week) => (
-                        <div
-                          key={`${project.id}-${week.year}-${week.week}`}
-                          className={cn(
-                            "border-r border-border",
-                            week.isCurrentWeek && "bg-primary/5",
-                            week.isPast && "bg-muted/20"
-                          )}
-                        />
-                      ))}
-
-                      {/* Project Bar (overlay) */}
-                      {barStyle && (
-                        <div
-                          className="absolute top-2 bottom-2 rounded-md flex items-center px-3 cursor-pointer hover:ring-2 hover:ring-ring transition-all"
-                          style={barStyle}
-                        >
-                          <span className="text-white text-sm font-medium truncate">
-                            {project.name}
-                          </span>
-                        </div>
+                      {isCollapsed ? (
+                        <ChevronRight className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
                       )}
-                    </div>
+                      <div
+                        className="h-3 w-3 rounded"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span className="font-medium">{category.name}</span>
+                      <Badge variant="secondary" className="ml-2">
+                        {categoryProjects.length}
+                      </Badge>
+                    </button>
 
-                    {/* Staffing Row */}
-                    <div
-                      className="grid bg-muted/20"
-                      style={{
-                        gridTemplateColumns: `280px repeat(${weeks.length}, minmax(100px, 1fr))`
-                      }}
-                    >
-                      <div className="p-2 border-r border-border text-xs text-muted-foreground flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5" />
-                        Besetzung
-                      </div>
-                      {weeks.map((week) => {
-                        const isInProjectRange =
-                          (week.year > project.startYear ||
-                            (week.year === project.startYear && week.week >= project.startWeek)) &&
-                          (week.year < project.endYear ||
-                            (week.year === project.endYear && week.week <= project.endWeek))
-
-                        const assigned = getAssignedForWeek(project.id, week.week, week.year)
-
-                        return (
-                          <DroppableWeekCell
-                            key={`staff-${project.id}-${week.year}-${week.week}`}
-                            id={`drop-${project.id}-${week.year}-${week.week}`}
-                            projectId={project.id}
-                            week={week.week}
-                            year={week.year}
-                            isInRange={isInProjectRange}
-                            isCurrentWeek={week.isCurrentWeek}
-                          >
-                            {isInProjectRange && (
-                              <div className="flex flex-wrap gap-1">
-                                {/* Assigned employees */}
-                                {assigned.map(({ assignment, employee }) => (
-                                  <div
-                                    key={assignment.id}
-                                    className="group relative flex items-center gap-1 bg-card rounded px-1.5 py-0.5 text-xs border"
-                                  >
-                                    <span
-                                      className="h-2 w-2 rounded-full"
-                                      style={{
-                                        backgroundColor: TEAMS.find(t => t.id === employee.teamId)?.color
-                                      }}
-                                    />
-                                    <span className="truncate max-w-[60px]">
-                                      {employee.name.split(',')[0]}
-                                    </span>
-                                    <button
-                                      onClick={() => removeEmployeeFromProjectWeek(
-                                        employee.id,
-                                        project.id,
-                                        week.week,
-                                        week.year
-                                      )}
-                                      className="hidden group-hover:flex h-4 w-4 items-center justify-center rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </div>
-                                ))}
-
-                                {/* Add button */}
-                                <StaffingPopover
-                                  projectId={project.id}
-                                  week={week.week}
-                                  year={week.year}
-                                  trigger={
-                                    <button className="h-6 w-6 rounded border border-dashed border-muted-foreground/30 flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors">
-                                      <Plus className="h-3.5 w-3.5" />
-                                    </button>
-                                  }
-                                />
-                              </div>
-                            )}
-                          </DroppableWeekCell>
-                        )
-                      })}
-                    </div>
+                    {/* Projects in Group */}
+                    {!isCollapsed && categoryProjects.map(renderProjectRow)}
                   </div>
                 )
               })}
@@ -491,6 +627,19 @@ export function ProjectTimeline() {
                   placeholder="z.B. PRJ-2026-007"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Kategorie</label>
+              <select
+                value={newProject.category}
+                onChange={(e) => setNewProject({ ...newProject, category: e.target.value as ProjectCategory })}
+                className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {PROJECT_CATEGORIES.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -572,6 +721,148 @@ export function ProjectTimeline() {
             </Button>
             <Button onClick={handleCreateProject} disabled={!newProject.name}>
               Erstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Project Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Projekt bearbeiten</DialogTitle>
+          </DialogHeader>
+
+          {editingProject && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Projektname</label>
+                  <input
+                    type="text"
+                    value={editingProject.name}
+                    onChange={(e) => setEditingProject({ ...editingProject, name: e.target.value })}
+                    className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Auftragsnummer</label>
+                  <input
+                    type="text"
+                    value={editingProject.projectNumber}
+                    onChange={(e) => setEditingProject({ ...editingProject, projectNumber: e.target.value })}
+                    className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Kategorie</label>
+                  <select
+                    value={editingProject.category || 'Sonstiges'}
+                    onChange={(e) => setEditingProject({ ...editingProject, category: e.target.value as ProjectCategory })}
+                    className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {PROJECT_CATEGORIES.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Status</label>
+                  <select
+                    value={editingProject.status}
+                    onChange={(e) => setEditingProject({ ...editingProject, status: e.target.value as Project['status'] })}
+                    className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="planned">Geplant</option>
+                    <option value="active">Aktiv</option>
+                    <option value="on-hold">Pausiert</option>
+                    <option value="completed">Abgeschlossen</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Beschreibung</label>
+                <textarea
+                  value={editingProject.description}
+                  onChange={(e) => setEditingProject({ ...editingProject, description: e.target.value })}
+                  className="w-full h-20 px-3 py-2 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Start (KW)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="52"
+                      value={editingProject.startWeek}
+                      onChange={(e) => setEditingProject({ ...editingProject, startWeek: parseInt(e.target.value) })}
+                      className="flex-1 h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <input
+                      type="number"
+                      min="2020"
+                      max="2030"
+                      value={editingProject.startYear}
+                      onChange={(e) => setEditingProject({ ...editingProject, startYear: parseInt(e.target.value) })}
+                      className="w-20 h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Ende (KW)</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max="52"
+                      value={editingProject.endWeek}
+                      onChange={(e) => setEditingProject({ ...editingProject, endWeek: parseInt(e.target.value) })}
+                      className="flex-1 h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                    <input
+                      type="number"
+                      min="2020"
+                      max="2030"
+                      value={editingProject.endYear}
+                      onChange={(e) => setEditingProject({ ...editingProject, endYear: parseInt(e.target.value) })}
+                      className="w-20 h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Farbe</label>
+                <div className="flex gap-2">
+                  {PROJECT_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setEditingProject({ ...editingProject, color })}
+                      className={cn(
+                        "h-8 w-8 rounded-full transition-transform",
+                        editingProject.color === color && "ring-2 ring-ring ring-offset-2 scale-110"
+                      )}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleSaveProject}>
+              Speichern
             </Button>
           </DialogFooter>
         </DialogContent>

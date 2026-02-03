@@ -132,6 +132,9 @@ export function PeopleTimeline() {
       const project = projects.find((p) => p.id === assignment.projectId)
       return project?.name || assignment.title
     }
+    if (assignment.eventType === 'training') {
+      return `Training: ${assignment.title}`
+    }
     return assignment.title
   }
 

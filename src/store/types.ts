@@ -38,12 +38,16 @@ export interface Training {
   color: string
 }
 
+// Project categories for grouping
+export type ProjectCategory = 'R95/R96' | 'DPQ' | 'T89/T86' | 'Sonstiges'
+
 export interface Project {
   id: string
   name: string
   projectNumber: string // Auftragsnummer
   description: string
   color: string
+  category?: ProjectCategory // For grouping in timeline
   startWeek: number // Calendar week (KW)
   startYear: number
   endWeek: number
