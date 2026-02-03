@@ -86,7 +86,7 @@ export const useStore = create<PlannerState>()(
       employees: [],
       projects: [],
       assignments: [],
-      currentView: 'projects',
+      currentView: 'people',
       selectedProjectId: null,
       selectedEmployeeId: null,
       timelineSettings: {

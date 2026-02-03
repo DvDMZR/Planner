@@ -10,8 +10,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { id: 'people', label: 'Mitarbeiterplanung', icon: <Users className="h-5 w-5" /> },
   { id: 'projects', label: 'Projekte', icon: <FolderKanban className="h-5 w-5" /> },
-  { id: 'people', label: 'Mitarbeiter', icon: <Users className="h-5 w-5" /> },
   { id: 'stats', label: 'Statistiken', icon: <BarChart3 className="h-5 w-5" /> },
   { id: 'settings', label: 'Einstellungen', icon: <Settings className="h-5 w-5" /> },
 ]
