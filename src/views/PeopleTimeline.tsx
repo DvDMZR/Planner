@@ -1,12 +1,20 @@
 import { useMemo, useState } from 'react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, X } from 'lucide-react'
 import { useStore, TEAMS } from '../store/useStore'
 import { TimelineHeader } from '../components/TimelineHeader'
 import { ScrollArea } from '../components/ui/scroll-area'
 import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '../components/ui/dialog'
 import { cn } from '../lib/utils'
 import { generateWeeksArray } from '../lib/date-utils'
-import type { TeamId, Employee, Assignment } from '../store/types'
+import type { TeamId, Employee, Assignment, EventType } from '../store/types'
 
 // Event type colors
 const EVENT_COLORS: Record<string, string> = {
@@ -16,17 +24,41 @@ const EVENT_COLORS: Record<string, string> = {
   training: '#06B6D4'
 }
 
+const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  project: 'Projekt',
+  recurring: 'Wiederkehrend',
+  spontaneous: 'Spontan',
+  training: 'Training'
+}
+
 export function PeopleTimeline() {
   const {
     employees,
     projects,
     assignments,
-    timelineSettings
+    timelineSettings,
+    addAssignment,
+    deleteAssignment
   } = useStore()
 
   const [expandedTeams, setExpandedTeams] = useState<Set<TeamId>>(
     new Set(['as', 'cms', 'hm', 'ic'])
   )
+
+  // Dialog state for adding tasks
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false)
+  const [selectedCell, setSelectedCell] = useState<{
+    employeeId: string
+    employeeName: string
+    week: number
+    year: number
+  } | null>(null)
+  const [newTask, setNewTask] = useState({
+    title: '',
+    eventType: 'spontaneous' as EventType,
+    hoursPlanned: 40,
+    notes: ''
+  })
 
   // Generate weeks array for header
   const weeks = useMemo(() => {
@@ -97,9 +129,47 @@ export function PeopleTimeline() {
     return assignment.title
   }
 
+  const handleCellClick = (employee: Employee, week: number, year: number) => {
+    setSelectedCell({
+      employeeId: employee.id,
+      employeeName: employee.name,
+      week,
+      year
+    })
+    setNewTask({
+      title: '',
+      eventType: 'spontaneous',
+      hoursPlanned: 40,
+      notes: ''
+    })
+    setIsAddTaskOpen(true)
+  }
+
+  const handleCreateTask = () => {
+    if (!selectedCell || !newTask.title) return
+
+    addAssignment({
+      employeeId: selectedCell.employeeId,
+      eventType: newTask.eventType,
+      title: newTask.title,
+      week: selectedCell.week,
+      year: selectedCell.year,
+      hoursPlanned: newTask.hoursPlanned,
+      notes: newTask.notes || undefined
+    })
+
+    setIsAddTaskOpen(false)
+    setSelectedCell(null)
+  }
+
+  const handleDeleteAssignment = (assignmentId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    deleteAssignment(assignmentId)
+  }
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <TimelineHeader title="Mitarbeiter-Timeline" />
+      <TimelineHeader title="Mitarbeiterplanung" />
 
       {/* Timeline Grid */}
       <ScrollArea orientation="both" className="flex-1">
@@ -226,8 +296,9 @@ export function PeopleTimeline() {
                         return (
                           <div
                             key={`${employee.id}-${week.year}-${week.week}`}
+                            onClick={() => handleCellClick(employee, week.week, week.year)}
                             className={cn(
-                              "p-1 border-r min-h-[52px]",
+                              "p-1 border-r min-h-[52px] cursor-pointer hover:bg-accent/50 transition-colors group",
                               week.isCurrentWeek && "bg-primary/5",
                               week.isPast && "bg-muted/20",
                               isOverbooked && "bg-red-50 dark:bg-red-950/20"
@@ -237,16 +308,34 @@ export function PeopleTimeline() {
                               {weekAssignments.map((assignment) => (
                                 <div
                                   key={assignment.id}
-                                  className="rounded px-1.5 py-0.5 text-xs text-white truncate"
+                                  className="rounded px-1.5 py-0.5 text-xs text-white truncate flex items-center gap-1 group/item"
                                   style={{
                                     backgroundColor: getAssignmentColor(assignment)
                                   }}
                                   title={`${getAssignmentLabel(assignment)} (${assignment.hoursPlanned}h)`}
+                                  onClick={(e) => e.stopPropagation()}
                                 >
-                                  {getAssignmentLabel(assignment)}
+                                  <span className="truncate flex-1">
+                                    {getAssignmentLabel(assignment)}
+                                  </span>
+                                  {assignment.eventType !== 'project' && (
+                                    <button
+                                      onClick={(e) => handleDeleteAssignment(assignment.id, e)}
+                                      className="hidden group-hover/item:flex h-4 w-4 items-center justify-center rounded-full bg-white/20 hover:bg-white/40"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  )}
                                 </div>
                               ))}
                             </div>
+
+                            {/* Add button on hover when empty or partially filled */}
+                            {totalHours < 40 && (
+                              <div className="hidden group-hover:flex items-center justify-center mt-1">
+                                <Plus className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            )}
 
                             {/* Hours indicator */}
                             {totalHours > 0 && (
@@ -271,6 +360,91 @@ export function PeopleTimeline() {
           })}
         </div>
       </ScrollArea>
+
+      {/* Add Task Dialog */}
+      <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Eintrag erstellen - KW {selectedCell?.week}
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedCell && (
+            <div className="space-y-4 py-4">
+              <div className="text-sm text-muted-foreground">
+                Mitarbeiter: <span className="font-medium text-foreground">{selectedCell.employeeName}</span>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Titel</label>
+                <input
+                  type="text"
+                  value={newTask.title}
+                  onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                  className="w-full h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="z.B. Kundenbesuch, Training, Urlaub..."
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Typ</label>
+                <div className="flex gap-2 flex-wrap">
+                  {(['spontaneous', 'recurring', 'training'] as EventType[]).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setNewTask({ ...newTask, eventType: type })}
+                      className={cn(
+                        "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                        newTask.eventType === type
+                          ? "text-white"
+                          : "bg-muted text-muted-foreground hover:bg-accent"
+                      )}
+                      style={{
+                        backgroundColor: newTask.eventType === type ? EVENT_COLORS[type] : undefined
+                      }}
+                    >
+                      {EVENT_TYPE_LABELS[type]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Stunden</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={newTask.hoursPlanned}
+                  onChange={(e) => setNewTask({ ...newTask, hoursPlanned: parseInt(e.target.value) || 0 })}
+                  className="w-24 h-10 px-3 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Notizen (optional)</label>
+                <textarea
+                  value={newTask.notes}
+                  onChange={(e) => setNewTask({ ...newTask, notes: e.target.value })}
+                  className="w-full h-20 px-3 py-2 rounded-md border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                  placeholder="Zusätzliche Informationen..."
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddTaskOpen(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={handleCreateTask} disabled={!newTask.title}>
+              Erstellen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
