@@ -15,10 +15,10 @@ import { getCurrentWeek } from '../lib/date-utils'
 
 // Teams configuration
 export const TEAMS: Team[] = [
-  { id: 'frontend', name: 'Frontend', color: '#3B82F6' },
-  { id: 'backend', name: 'Backend', color: '#10B981' },
-  { id: 'design', name: 'Design', color: '#8B5CF6' },
-  { id: 'devops', name: 'DevOps', color: '#F59E0B' }
+  { id: 'as', name: 'Team AS', color: '#3B82F6' },
+  { id: 'cms', name: 'Team CMS', color: '#10B981' },
+  { id: 'hm', name: 'Team HM', color: '#8B5CF6' },
+  { id: 'ic', name: 'Team I&C', color: '#F59E0B' }
 ]
 
 // Standard work hours per week

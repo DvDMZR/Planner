@@ -1,6 +1,6 @@
 // Core Types for Team Resource Planning Application
 
-export type TeamId = 'frontend' | 'backend' | 'design' | 'devops'
+export type TeamId = 'as' | 'cms' | 'hm' | 'ic'
 
 export interface Team {
   id: TeamId

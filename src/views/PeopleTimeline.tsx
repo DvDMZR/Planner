@@ -25,7 +25,7 @@ export function PeopleTimeline() {
   } = useStore()
 
   const [expandedTeams, setExpandedTeams] = useState<Set<TeamId>>(
-    new Set(['frontend', 'backend', 'design', 'devops'])
+    new Set(['as', 'cms', 'hm', 'ic'])
   )
 
   // Generate weeks array for header
@@ -41,10 +41,10 @@ export function PeopleTimeline() {
   // Group employees by team
   const employeesByTeam = useMemo(() => {
     const grouped: Record<TeamId, Employee[]> = {
-      frontend: [],
-      backend: [],
-      design: [],
-      devops: []
+      as: [],
+      cms: [],
+      hm: [],
+      ic: []
     }
 
     employees.forEach((emp) => {
