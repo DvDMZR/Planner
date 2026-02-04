@@ -1,6 +1,6 @@
 /**
  * Team Ressourcen Planer - Styles
- * Version: 0.7.1
+ * Version: 0.8.0
  */
 
 /* ========================================
@@ -126,6 +126,34 @@ button:active {
 button:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
+}
+
+.header-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+}
+
+.btn-demo {
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: var(--spacing-md) var(--spacing-xl);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-demo:hover {
+    background: var(--primary-hover);
+}
+
+.btn-demo.loaded {
+    background: var(--warning);
+}
+
+.btn-demo.loaded:hover {
+    background: #d97706;
 }
 
 .btn-reset {
@@ -291,6 +319,12 @@ td.clickable:focus-visible {
 .type-support { background-color: var(--task-support); }
 .type-reise { background-color: var(--task-reise); }
 .type-training { background-color: var(--task-training); }
+
+/* Category Colors (override task colors when category is set) */
+.category-T89 { background-color: #3b82f6 !important; }
+.category-DPQ { background-color: #10b981 !important; }
+.category-F4500 { background-color: #8b5cf6 !important; }
+.category-AFS { background-color: #f59e0b !important; }
 
 /* ========================================
    Modal
