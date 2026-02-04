@@ -273,7 +273,7 @@ const DateUtils = {
 // ============================================
 const DataManager = {
     /**
-     * Load data from storage
+     * Load data from storage (starts empty if no data)
      */
     load() {
         const storedEmps = Storage.get(CONFIG.storageKeys.employees);
@@ -282,14 +282,46 @@ const DataManager = {
         if (storedEmps && Array.isArray(storedEmps)) {
             State.employees = storedEmps;
         } else {
-            this.generateDummyEmployees();
+            State.employees = [];
         }
 
         if (storedTasks && Array.isArray(storedTasks)) {
             State.tasks = storedTasks;
+        } else {
+            State.tasks = [];
         }
 
         State.weekKeys = DateUtils.generateWeekKeys();
+    },
+
+    /**
+     * Check if demo data is currently loaded
+     * @returns {boolean}
+     */
+    hasDemoData() {
+        return State.employees.length > 0;
+    },
+
+    /**
+     * Load demo data
+     */
+    loadDemoData() {
+        this.generateDummyEmployees();
+        Toast.show('Demo-Daten wurden geladen.', 'success');
+        Renderer.renderBody();
+        App.updateDemoButton();
+    },
+
+    /**
+     * Clear all demo data
+     */
+    clearDemoData() {
+        State.employees = [];
+        State.tasks = [];
+        this.save();
+        Toast.show('Demo-Daten wurden gelöscht.', 'success');
+        Renderer.renderBody();
+        App.updateDemoButton();
     },
 
     /**
@@ -854,6 +886,9 @@ const App = {
         // Set up global handlers
         this.setupGlobalHandlers();
 
+        // Update demo button state
+        this.updateDemoButton();
+
         // Display version
         const versionEl = document.getElementById('version');
         if (versionEl) {
@@ -867,10 +902,40 @@ const App = {
      * Setup global event handlers
      */
     setupGlobalHandlers() {
+        // Demo button - toggle between load/clear
+        const demoBtn = document.getElementById('demoBtn');
+        if (demoBtn) {
+            demoBtn.addEventListener('click', () => {
+                if (DataManager.hasDemoData()) {
+                    DataManager.clearDemoData();
+                } else {
+                    DataManager.loadDemoData();
+                }
+            });
+        }
+
         // Reset button
         const resetBtn = document.getElementById('resetBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => DataManager.reset());
+        }
+    },
+
+    /**
+     * Update demo button text and style based on data state
+     */
+    updateDemoButton() {
+        const demoBtn = document.getElementById('demoBtn');
+        if (!demoBtn) return;
+
+        if (DataManager.hasDemoData()) {
+            demoBtn.textContent = 'DEMO DATEN LÖSCHEN';
+            demoBtn.classList.add('loaded');
+            demoBtn.setAttribute('aria-label', 'Demo Daten löschen');
+        } else {
+            demoBtn.textContent = 'DEMO DATEN LADEN';
+            demoBtn.classList.remove('loaded');
+            demoBtn.setAttribute('aria-label', 'Demo Daten laden');
         }
     }
 };
