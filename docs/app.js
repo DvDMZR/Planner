@@ -10,82 +10,15 @@
 // Configuration
 // ============================================
 const CONFIG = {
-    version: '0.8.0',
-    teams: ['IC Team', 'CMS Team', 'AS Team', 'HM Team'],
+    version: '0.7.1',
+    teams: ['Development', 'Sales', 'Consulting', 'Marketing'],
+    employeesPerTeam: [8, 6, 10, 6],
     weeksToShow: 12,
     storageKeys: {
         employees: 'planer_employees',
         tasks: 'planer_tasks'
     },
-    toastDuration: 3000,
-
-    // Project Categories
-    categories: {
-        T89: { name: 'T89', color: '#3b82f6' },
-        DPQ: { name: 'DPQ', color: '#10b981' },
-        F4500: { name: 'F4500', color: '#8b5cf6' },
-        AFS: { name: 'AFS', color: '#f59e0b' }
-    },
-
-    // Demo Data
-    demoEmployees: {
-        'IC Team': [
-            'IC-MA 1', 'IC-MA 2', 'IC-MA 3', 'IC-MA 4', 'IC-MA 5', 'IC-MA 6'
-        ],
-        'CMS Team': [
-            'CMS-MA 1', 'CMS-MA 2', 'CMS-MA 3', 'CMS-MA 4', 'CMS-MA 5'
-        ],
-        'AS Team': [
-            'AS-MA 1', 'AS-MA 2', 'AS-MA 3', 'AS-MA 4', 'AS-MA 5', 'AS-MA 6'
-        ],
-        'HM Team': [
-            'HM-MA 1', 'HM-MA 2', 'HM-MA 3', 'HM-MA 4'
-        ]
-    },
-
-    // Demo Projects with 9-digit fake numbers
-    demoProjects: {
-        T89: [
-            { name: 'CloudSync/89', number: '777-421-893' },
-            { name: 'DataHub/89', number: '834-556-127' },
-            { name: 'Portal/89', number: '912-678-345' }
-        ],
-        DPQ: [
-            { name: 'DPQ Analytics', number: '456-789-123' },
-            { name: 'DPQ Migration', number: '321-654-987' },
-            { name: 'DPQ Core', number: '159-753-486' }
-        ],
-        F4500: [
-            { name: 'EmelyEstate', number: '888-333-777' }
-        ],
-        AFS: [
-            { name: 'AFS Support', number: '246-813-579' },
-            { name: 'AFS Maintenance', number: '135-792-468' }
-        ]
-    },
-
-    // Trainings by Team (trainers = number of trainers needed)
-    demoTrainings: {
-        'AS Team': [
-            { name: 'R9500 I&C', trainers: 2 },
-            { name: 'R9500 S&T', trainers: 2 },
-            { name: 'F4500 I&C', trainers: 2 },
-            { name: 'F4500 S&T', trainers: 2 },
-            { name: 'DPQ', trainers: 2 }
-        ],
-        'CMS Team': [
-            { name: 'T8900', trainers: 2 },
-            { name: 'T8600', trainers: 2 },
-            { name: 'DPX', trainers: 2 },
-            { name: 'CowScout', trainers: 2 }
-        ],
-        'HM Team': [
-            { name: 'DairyNet', trainers: 2 },
-            { name: 'DairyPlan', trainers: 2 },
-            { name: 'Good Cow Feeding', trainers: 2 },
-            { name: 'Good Cow Milking', trainers: 2 }
-        ]
-    }
+    toastDuration: 3000
 };
 
 // ============================================
@@ -270,7 +203,7 @@ const DateUtils = {
 // ============================================
 const DataManager = {
     /**
-     * Load data from storage (starts empty if no data)
+     * Load data from storage
      */
     load() {
         const storedEmps = Storage.get(CONFIG.storageKeys.employees);
@@ -279,229 +212,35 @@ const DataManager = {
         if (storedEmps && Array.isArray(storedEmps)) {
             State.employees = storedEmps;
         } else {
-            State.employees = [];
+            this.generateDummyEmployees();
         }
 
         if (storedTasks && Array.isArray(storedTasks)) {
             State.tasks = storedTasks;
-        } else {
-            State.tasks = [];
         }
 
         State.weekKeys = DateUtils.generateWeekKeys();
     },
 
     /**
-     * Check if demo data is currently loaded
-     * @returns {boolean}
-     */
-    hasDemoData() {
-        return State.employees.length > 0;
-    },
-
-    /**
-     * Load demo data
-     */
-    loadDemoData() {
-        this.generateDummyEmployees();
-        Toast.show('Demo-Daten wurden geladen.', 'success');
-        Renderer.renderBody();
-        App.updateDemoButton();
-    },
-
-    /**
-     * Clear all demo data
-     */
-    clearDemoData() {
-        State.employees = [];
-        State.tasks = [];
-        this.save();
-        Toast.show('Demo-Daten wurden gelöscht.', 'success');
-        Renderer.renderBody();
-        App.updateDemoButton();
-    },
-
-    /**
-     * Generate demo employee data
+     * Generate dummy employee data
      */
     generateDummyEmployees() {
         let idCounter = 1;
         State.employees = [];
 
-        CONFIG.teams.forEach(team => {
-            const teamEmployees = CONFIG.demoEmployees[team] || [];
-            teamEmployees.forEach(name => {
+        CONFIG.teams.forEach((team, index) => {
+            for (let i = 0; i < CONFIG.employeesPerTeam[index]; i++) {
                 State.employees.push({
-                    id: idCounter++,
-                    name: name,
+                    id: idCounter,
+                    name: `Mitarbeiter ${idCounter}`,
                     team: team
                 });
-            });
+                idCounter++;
+            }
         });
 
-        // Generate demo tasks after employees
-        this.generateDemoTasks();
         this.save();
-    },
-
-    /**
-     * Generate demo tasks with proper assignments
-     * - IC Team: T89 and DPQ projects
-     * - CMS Team: T89 projects
-     * - AS Team: DPQ and AFS projects
-     * - Trainings: Each team does their specific trainings (2 trainers each)
-     * - Hotline rotation for AS team members
-     */
-    generateDemoTasks() {
-        State.tasks = [];
-        const weeks = DateUtils.generateWeekKeys();
-
-        // Track which employee-week combinations are used
-        const usedSlots = new Set();
-
-        const isSlotFree = (empId, weekKey) => !usedSlots.has(`${empId}-${weekKey}`);
-        const markSlotUsed = (empId, weekKey) => usedSlots.add(`${empId}-${weekKey}`);
-
-        const addTask = (empId, weekKey, type, desc, category = null) => {
-            if (!isSlotFree(empId, weekKey)) return false;
-
-            State.tasks.push({
-                id: Date.now() + Math.random(),
-                empId,
-                week: weekKey,
-                type,
-                desc,
-                category
-            });
-            markSlotUsed(empId, weekKey);
-            return true;
-        };
-
-        // Get employees by team
-        const getTeamEmployees = (teamName) =>
-            State.employees.filter(e => e.team === teamName);
-
-        const icTeam = getTeamEmployees('IC Team');
-        const cmsTeam = getTeamEmployees('CMS Team');
-        const asTeam = getTeamEmployees('AS Team');
-        const hmTeam = getTeamEmployees('HM Team');
-
-        // === IC Team: T89 and DPQ projects ===
-        const icT89Projects = CONFIG.demoProjects.T89;
-        const icDPQProjects = CONFIG.demoProjects.DPQ;
-
-        icTeam.forEach((emp, idx) => {
-            // Distribute T89 projects (first half of team)
-            if (idx < 3) {
-                const project = icT89Projects[idx % icT89Projects.length];
-                for (let w = 0; w < Math.min(6, weeks.length); w++) {
-                    addTask(emp.id, weeks[w].key, 'projekt',
-                        `${project.name} (${project.number})`, 'T89');
-                }
-            }
-            // Distribute DPQ projects (second half of team)
-            else {
-                const project = icDPQProjects[(idx - 3) % icDPQProjects.length];
-                for (let w = 0; w < Math.min(6, weeks.length); w++) {
-                    addTask(emp.id, weeks[w].key, 'projekt',
-                        `${project.name} (${project.number})`, 'DPQ');
-                }
-            }
-        });
-
-        // === CMS Team: T89 projects ===
-        cmsTeam.forEach((emp, idx) => {
-            const project = icT89Projects[idx % icT89Projects.length];
-            for (let w = 0; w < Math.min(5, weeks.length); w++) {
-                addTask(emp.id, weeks[w].key, 'projekt',
-                    `${project.name} (${project.number})`, 'T89');
-            }
-        });
-
-        // === AS Team: DPQ and AFS projects ===
-        const afsProjects = CONFIG.demoProjects.AFS;
-
-        asTeam.forEach((emp, idx) => {
-            // First half: DPQ
-            if (idx < 3) {
-                const project = icDPQProjects[idx % icDPQProjects.length];
-                for (let w = 0; w < Math.min(4, weeks.length); w++) {
-                    addTask(emp.id, weeks[w].key, 'projekt',
-                        `${project.name} (${project.number})`, 'DPQ');
-                }
-            }
-            // Second half: AFS
-            else {
-                const project = afsProjects[(idx - 3) % afsProjects.length];
-                for (let w = 0; w < Math.min(4, weeks.length); w++) {
-                    addTask(emp.id, weeks[w].key, 'support',
-                        `${project.name} (${project.number})`, 'AFS');
-                }
-            }
-        });
-
-        // === F4500 / EmelyEstate - add to some free slots ===
-        const emelyProject = CONFIG.demoProjects.F4500[0];
-        // Assign to 2 IC team members in later weeks
-        if (icTeam.length >= 2 && weeks.length > 6) {
-            addTask(icTeam[0].id, weeks[7].key, 'projekt',
-                `${emelyProject.name} (${emelyProject.number})`, 'F4500');
-            addTask(icTeam[1].id, weeks[7].key, 'projekt',
-                `${emelyProject.name} (${emelyProject.number})`, 'F4500');
-        }
-
-        // === Trainings: Team-specific trainings distributed over 12 weeks ===
-        // Each team does their own trainings, 2 trainers per training
-        const teamsWithTrainings = [
-            { team: asTeam, trainings: CONFIG.demoTrainings['AS Team'] || [] },
-            { team: cmsTeam, trainings: CONFIG.demoTrainings['CMS Team'] || [] },
-            { team: hmTeam, trainings: CONFIG.demoTrainings['HM Team'] || [] }
-        ];
-
-        teamsWithTrainings.forEach(({ team, trainings }) => {
-            if (!trainings.length || !team.length) return;
-
-            // Distribute trainings across 12 weeks
-            trainings.forEach((training, tIdx) => {
-                // Spread trainings across weeks (every 2-3 weeks per team)
-                const weekIdx = (tIdx * 3) % weeks.length;
-                if (weekIdx >= weeks.length) return;
-
-                const weekKey = weeks[weekIdx].key;
-
-                // Find 2 trainers from this team
-                let trainersAssigned = 0;
-                for (const emp of team) {
-                    if (trainersAssigned >= training.trainers) break;
-                    if (isSlotFree(emp.id, weekKey)) {
-                        addTask(emp.id, weekKey, 'training', training.name);
-                        trainersAssigned++;
-                    }
-                }
-            });
-        });
-
-        // === Hotline Rotation for AS Team ===
-        // One AS team member per week, rotating through free slots
-        asTeam.forEach((emp, idx) => {
-            // Each AS member gets hotline duty in rotation
-            for (let w = idx; w < weeks.length; w += asTeam.length) {
-                if (isSlotFree(emp.id, weeks[w].key)) {
-                    addTask(emp.id, weeks[w].key, 'support', 'Hotline-Rotation AS');
-                }
-            }
-        });
-
-        // === HM Team: Support & Beratung tasks ===
-        hmTeam.forEach((emp) => {
-            for (let w = 0; w < weeks.length; w++) {
-                if (isSlotFree(emp.id, weeks[w].key)) {
-                    addTask(emp.id, weeks[w].key, 'support', 'Support & Beratung');
-                }
-            }
-        });
-
-        console.log(`Generated ${State.tasks.length} demo tasks`);
     },
 
     /**
@@ -542,10 +281,9 @@ const DataManager = {
      * @param {string} week
      * @param {string} type
      * @param {string} desc
-     * @param {string|null} category
      * @returns {boolean}
      */
-    addTask(empId, week, type, desc, category = null) {
+    addTask(empId, week, type, desc) {
         // Validate employee exists
         const employee = State.employees.find(e => e.id === empId);
         if (!employee) {
@@ -563,19 +301,13 @@ const DataManager = {
         // Sanitize description
         const sanitizedDesc = this.sanitizeInput(desc);
 
-        const task = {
+        State.tasks.push({
             id: Date.now() + Math.random(),
             empId,
             week,
             type,
             desc: sanitizedDesc
-        };
-
-        if (category) {
-            task.category = category;
-        }
-
-        State.tasks.push(task);
+        });
 
         this.save();
         Toast.show('Eintrag gespeichert.', 'success');
@@ -692,9 +424,6 @@ const Renderer = {
                 if (task) {
                     const div = document.createElement('div');
                     div.className = `task type-${task.type}`;
-                    if (task.category) {
-                        div.classList.add(`category-${task.category}`);
-                    }
                     div.textContent = task.desc || this.getTaskTypeLabel(task.type);
                     div.setAttribute('role', 'button');
                     div.setAttribute('tabindex', '0');
@@ -790,17 +519,6 @@ const Modal = {
                 this.save();
             });
         }
-
-        // Show/hide category based on task type
-        const taskTypeSelect = document.getElementById('taskType');
-        const categoryGroup = document.getElementById('categoryGroup');
-        if (taskTypeSelect && categoryGroup) {
-            taskTypeSelect.addEventListener('change', () => {
-                categoryGroup.style.display =
-                    (taskTypeSelect.value === 'projekt' || taskTypeSelect.value === 'support')
-                        ? 'block' : 'none';
-            });
-        }
     },
 
     /**
@@ -815,12 +533,6 @@ const Modal = {
         document.getElementById('selectedWeek').value = weekKey;
         document.getElementById('taskDesc').value = '';
         document.getElementById('taskType').selectedIndex = 0;
-
-        // Reset and show category for default type (projekt)
-        const categorySelect = document.getElementById('taskCategory');
-        const categoryGroup = document.getElementById('categoryGroup');
-        if (categorySelect) categorySelect.selectedIndex = 0;
-        if (categoryGroup) categoryGroup.style.display = 'block';
 
         this.element.classList.add('active');
 
@@ -846,15 +558,13 @@ const Modal = {
         const week = document.getElementById('selectedWeek').value;
         const type = document.getElementById('taskType').value;
         const desc = document.getElementById('taskDesc').value.trim();
-        const categoryEl = document.getElementById('taskCategory');
-        const category = categoryEl ? categoryEl.value : null;
 
         if (isNaN(empId) || !week) {
             Toast.show('Ungültige Daten.', 'error');
             return;
         }
 
-        if (DataManager.addTask(empId, week, type, desc, category)) {
+        if (DataManager.addTask(empId, week, type, desc)) {
             this.close();
             Renderer.renderBody();
         }
@@ -883,9 +593,6 @@ const App = {
         // Set up global handlers
         this.setupGlobalHandlers();
 
-        // Update demo button state
-        this.updateDemoButton();
-
         // Display version
         const versionEl = document.getElementById('version');
         if (versionEl) {
@@ -899,40 +606,10 @@ const App = {
      * Setup global event handlers
      */
     setupGlobalHandlers() {
-        // Demo button - toggle between load/clear
-        const demoBtn = document.getElementById('demoBtn');
-        if (demoBtn) {
-            demoBtn.addEventListener('click', () => {
-                if (DataManager.hasDemoData()) {
-                    DataManager.clearDemoData();
-                } else {
-                    DataManager.loadDemoData();
-                }
-            });
-        }
-
         // Reset button
         const resetBtn = document.getElementById('resetBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => DataManager.reset());
-        }
-    },
-
-    /**
-     * Update demo button text and style based on data state
-     */
-    updateDemoButton() {
-        const demoBtn = document.getElementById('demoBtn');
-        if (!demoBtn) return;
-
-        if (DataManager.hasDemoData()) {
-            demoBtn.textContent = 'DEMO DATEN LÖSCHEN';
-            demoBtn.classList.add('loaded');
-            demoBtn.setAttribute('aria-label', 'Demo Daten löschen');
-        } else {
-            demoBtn.textContent = 'DEMO DATEN LADEN';
-            demoBtn.classList.remove('loaded');
-            demoBtn.setAttribute('aria-label', 'Demo Daten laden');
         }
     }
 };
