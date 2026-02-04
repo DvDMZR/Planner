@@ -1,0 +1,26 @@
+{
+  "name": "team-ressourcen-planer",
+  "version": "0.8.0",
+  "description": "Web-basiertes Tool zur Visualisierung und Verwaltung von Team-Verfügbarkeiten und Aufgabenzuweisungen",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . -l 3000"
+  },
+  "keywords": [
+    "team",
+    "resource",
+    "planner",
+    "scheduling",
+    "capacity"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

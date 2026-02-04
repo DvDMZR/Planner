@@ -1,0 +1,572 @@
+/**
+ * Team Ressourcen Planer - Styles
+ * Version: 0.7.1
+ */
+
+/* ========================================
+   CSS Variables (Theme)
+   ======================================== */
+:root {
+    --bg-body: #f4f4f9;
+    --bg-card: #ffffff;
+    --text-main: #333;
+    --text-muted: #64748b;
+    --border: #ddd;
+    --border-light: #eee;
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --highlight: #fffbeb;
+
+    /* Task Colors */
+    --task-projekt: #3b82f6;
+    --task-support: #10b981;
+    --task-reise: #f59e0b;
+    --task-training: #8b5cf6;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 16px;
+    --spacing-xl: 20px;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 10px rgba(0,0,0,0.05);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.2);
+
+    /* Transitions */
+    --transition-fast: 0.1s ease;
+    --transition-normal: 0.2s ease;
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    margin: 0;
+    padding: var(--spacing-xl);
+    line-height: 1.5;
+}
+
+/* ========================================
+   Header
+   ======================================== */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+    background: var(--bg-card);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.header-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.header-info h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.header-info .version {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-left: var(--spacing-sm);
+}
+
+.header-info small {
+    color: var(--text-muted);
+    display: block;
+    margin-top: var(--spacing-xs);
+}
+
+/* ========================================
+   Buttons
+   ======================================== */
+button {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+button:hover {
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.btn-reset {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-reset:hover {
+    background: var(--danger-hover);
+}
+
+.btn-cancel {
+    background: #e5e7eb;
+    color: var(--text-main);
+}
+
+.btn-cancel:hover {
+    background: #d1d5db;
+}
+
+.btn-save {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-save:hover {
+    background: var(--primary-hover);
+}
+
+/* ========================================
+   Timeline Container
+   ======================================== */
+.timeline-wrapper {
+    overflow-x: auto;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    max-height: 85vh;
+    position: relative;
+}
+
+/* ========================================
+   Table Styles
+   ======================================== */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 1200px;
+}
+
+/* Table Header */
+thead th {
+    background: #f8fafc;
+    padding: var(--spacing-md);
+    text-align: center;
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+thead th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 20;
+    background: #f8fafc;
+    min-width: 200px;
+    text-align: left;
+    padding-left: var(--spacing-xl);
+}
+
+/* Table Body */
+tbody th {
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 5;
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-xl);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 500;
+}
+
+tbody tr:hover th {
+    background: #f1f5f9;
+}
+
+td {
+    border-bottom: 1px solid var(--border-light);
+    border-right: 1px solid var(--border-light);
+    height: 50px;
+    position: relative;
+    padding: var(--spacing-xs);
+    vertical-align: middle;
+    text-align: center;
+}
+
+td.clickable {
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+td.clickable:hover {
+    background-color: #f8fafc;
+}
+
+td.clickable:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+/* Current Week Highlight */
+.current-week {
+    background-color: var(--highlight) !important;
+}
+
+/* Team Header Rows */
+.team-header {
+    background-color: #e2e8f0;
+    color: #1e293b;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.8rem;
+}
+
+.team-header td {
+    padding: var(--spacing-sm) var(--spacing-xl);
+    text-align: left;
+}
+
+/* ========================================
+   Task Blocks
+   ======================================== */
+.task {
+    font-size: 0.75rem;
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-sm);
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.task:hover {
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.task:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 1px;
+}
+
+/* Task Colors */
+.type-projekt { background-color: var(--task-projekt); }
+.type-support { background-color: var(--task-support); }
+.type-reise { background-color: var(--task-reise); }
+.type-training { background-color: var(--task-training); }
+
+/* ========================================
+   Modal
+   ======================================== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    width: 90%;
+    max-width: 400px;
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    animation: modalSlideIn 0.2s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content h2 {
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: 1.2rem;
+}
+
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 1rem;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-xl);
+}
+
+/* ========================================
+   Toast Notifications
+   ======================================== */
+.toast-container {
+    position: fixed;
+    bottom: var(--spacing-xl);
+    right: var(--spacing-xl);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.toast {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-sm);
+    color: white;
+    font-size: 0.9rem;
+    box-shadow: var(--shadow-md);
+    animation: toastSlideIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+.toast.info { background: var(--primary); }
+.toast.warning { background: var(--warning); }
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+.toast.hiding {
+    animation: toastSlideOut 0.3s ease forwards;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+@media screen and (max-width: 768px) {
+    body {
+        padding: var(--spacing-sm);
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: var(--spacing-md);
+    }
+
+    .header-info h1 {
+        font-size: 1.2rem;
+    }
+
+    .header-info small {
+        font-size: 0.75rem;
+    }
+
+    .timeline-wrapper {
+        max-height: 75vh;
+        border-radius: var(--radius-sm);
+    }
+
+    thead th {
+        padding: var(--spacing-sm);
+        font-size: 0.8rem;
+    }
+
+    thead th:first-child {
+        min-width: 120px;
+        padding-left: var(--spacing-sm);
+    }
+
+    tbody th {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.85rem;
+    }
+
+    td {
+        height: 40px;
+        padding: 2px;
+    }
+
+    .task {
+        font-size: 0.65rem;
+        padding: 2px;
+    }
+
+    .modal-content {
+        width: 95%;
+        padding: var(--spacing-lg);
+    }
+
+    .toast-container {
+        bottom: var(--spacing-sm);
+        right: var(--spacing-sm);
+        left: var(--spacing-sm);
+    }
+
+    .toast {
+        width: 100%;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .header-info h1 {
+        font-size: 1rem;
+    }
+
+    thead th:first-child {
+        min-width: 100px;
+    }
+
+    .team-header td {
+        font-size: 0.7rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+@media print {
+    body {
+        padding: 0;
+        background: white;
+    }
+
+    header {
+        box-shadow: none;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .btn-reset {
+        display: none;
+    }
+
+    .timeline-wrapper {
+        box-shadow: none;
+        max-height: none;
+        overflow: visible;
+    }
+
+    table {
+        min-width: auto;
+    }
+
+    .modal-overlay,
+    .toast-container {
+        display: none !important;
+    }
+}
+
+/* ========================================
+   Accessibility: Reduced Motion
+   ======================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ========================================
+   Focus Visible for Keyboard Navigation
+   ======================================== */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
