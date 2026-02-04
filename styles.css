@@ -1,6 +1,6 @@
 /**
  * Team Ressourcen Planer - Styles
- * Version: 0.7.1
+ * Version: 0.8.0
  */
 
 /* ========================================
@@ -291,6 +291,12 @@ td.clickable:focus-visible {
 .type-support { background-color: var(--task-support); }
 .type-reise { background-color: var(--task-reise); }
 .type-training { background-color: var(--task-training); }
+
+/* Category Colors (override task colors when category is set) */
+.category-T89 { background-color: #3b82f6 !important; }
+.category-DPQ { background-color: #10b981 !important; }
+.category-F4500 { background-color: #8b5cf6 !important; }
+.category-AFS { background-color: #f59e0b !important; }
 
 /* ========================================
    Modal

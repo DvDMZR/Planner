@@ -10,15 +10,70 @@
 // Configuration
 // ============================================
 const CONFIG = {
-    version: '0.7.1',
-    teams: ['Development', 'Sales', 'Consulting', 'Marketing'],
-    employeesPerTeam: [8, 6, 10, 6],
+    version: '0.8.0',
+    teams: ['IC Team', 'CMS Team', 'AS Team', 'Hotline'],
     weeksToShow: 12,
     storageKeys: {
         employees: 'planer_employees',
         tasks: 'planer_tasks'
     },
-    toastDuration: 3000
+    toastDuration: 3000,
+
+    // Project Categories
+    categories: {
+        T89: { name: 'T89', color: '#3b82f6' },
+        DPQ: { name: 'DPQ', color: '#10b981' },
+        F4500: { name: 'F4500', color: '#8b5cf6' },
+        AFS: { name: 'AFS', color: '#f59e0b' }
+    },
+
+    // Demo Data
+    demoEmployees: {
+        'IC Team': [
+            'Anna Schmidt', 'Max Weber', 'Lisa Müller', 'Tom Fischer',
+            'Sarah Koch', 'Jan Becker'
+        ],
+        'CMS Team': [
+            'Nina Hoffmann', 'Paul Wagner', 'Emma Schulz', 'Felix Braun',
+            'Laura Klein'
+        ],
+        'AS Team': [
+            'David Meyer', 'Julia Richter', 'Kevin Wolf', 'Marie Schäfer',
+            'Tim Neumann', 'Lena Zimmermann'
+        ],
+        'Hotline': [
+            'Chris Hartmann', 'Sophie Krüger', 'Lukas Lange', 'Hannah Schmitt'
+        ]
+    },
+
+    // Demo Projects with 9-digit fake numbers
+    demoProjects: {
+        T89: [
+            { name: 'CloudSync/89', number: '777-421-893' },
+            { name: 'DataHub/89', number: '834-556-127' },
+            { name: 'Portal/89', number: '912-678-345' }
+        ],
+        DPQ: [
+            { name: 'DPQ Analytics', number: '456-789-123' },
+            { name: 'DPQ Migration', number: '321-654-987' },
+            { name: 'DPQ Core', number: '159-753-486' }
+        ],
+        F4500: [
+            { name: 'EmelyEstate', number: '888-333-777' }
+        ],
+        AFS: [
+            { name: 'AFS Support', number: '246-813-579' },
+            { name: 'AFS Maintenance', number: '135-792-468' }
+        ]
+    },
+
+    // Demo Trainings
+    demoTrainings: [
+        { name: 'Agile Workshop', trainers: 2 },
+        { name: 'Security Training', trainers: 2 },
+        { name: 'Cloud Zertifizierung', trainers: 2 },
+        { name: 'Leadership Seminar', trainers: 2 }
+    ]
 };
 
 // ============================================
@@ -223,24 +278,180 @@ const DataManager = {
     },
 
     /**
-     * Generate dummy employee data
+     * Generate demo employee data
      */
     generateDummyEmployees() {
         let idCounter = 1;
         State.employees = [];
 
-        CONFIG.teams.forEach((team, index) => {
-            for (let i = 0; i < CONFIG.employeesPerTeam[index]; i++) {
+        CONFIG.teams.forEach(team => {
+            const teamEmployees = CONFIG.demoEmployees[team] || [];
+            teamEmployees.forEach(name => {
                 State.employees.push({
-                    id: idCounter,
-                    name: `Mitarbeiter ${idCounter}`,
+                    id: idCounter++,
+                    name: name,
                     team: team
                 });
-                idCounter++;
+            });
+        });
+
+        // Generate demo tasks after employees
+        this.generateDemoTasks();
+        this.save();
+    },
+
+    /**
+     * Generate demo tasks with proper assignments
+     * - IC Team: T89 and DPQ projects
+     * - CMS Team: T89 projects
+     * - AS Team: DPQ and AFS projects
+     * - Trainings distributed over 3 months
+     * - Hotline rotation for AS team members
+     */
+    generateDemoTasks() {
+        State.tasks = [];
+        const weeks = DateUtils.generateWeekKeys();
+
+        // Track which employee-week combinations are used
+        const usedSlots = new Set();
+
+        const isSlotFree = (empId, weekKey) => !usedSlots.has(`${empId}-${weekKey}`);
+        const markSlotUsed = (empId, weekKey) => usedSlots.add(`${empId}-${weekKey}`);
+
+        const addTask = (empId, weekKey, type, desc, category = null) => {
+            if (!isSlotFree(empId, weekKey)) return false;
+
+            State.tasks.push({
+                id: Date.now() + Math.random(),
+                empId,
+                week: weekKey,
+                type,
+                desc,
+                category
+            });
+            markSlotUsed(empId, weekKey);
+            return true;
+        };
+
+        // Get employees by team
+        const getTeamEmployees = (teamName) =>
+            State.employees.filter(e => e.team === teamName);
+
+        const icTeam = getTeamEmployees('IC Team');
+        const cmsTeam = getTeamEmployees('CMS Team');
+        const asTeam = getTeamEmployees('AS Team');
+        const hotlineTeam = getTeamEmployees('Hotline');
+
+        // === IC Team: T89 and DPQ projects ===
+        const icT89Projects = CONFIG.demoProjects.T89;
+        const icDPQProjects = CONFIG.demoProjects.DPQ;
+
+        icTeam.forEach((emp, idx) => {
+            // Distribute T89 projects (first half of team)
+            if (idx < 3) {
+                const project = icT89Projects[idx % icT89Projects.length];
+                for (let w = 0; w < Math.min(6, weeks.length); w++) {
+                    addTask(emp.id, weeks[w].key, 'projekt',
+                        `${project.name} (${project.number})`, 'T89');
+                }
+            }
+            // Distribute DPQ projects (second half of team)
+            else {
+                const project = icDPQProjects[(idx - 3) % icDPQProjects.length];
+                for (let w = 0; w < Math.min(6, weeks.length); w++) {
+                    addTask(emp.id, weeks[w].key, 'projekt',
+                        `${project.name} (${project.number})`, 'DPQ');
+                }
             }
         });
 
-        this.save();
+        // === CMS Team: T89 projects ===
+        cmsTeam.forEach((emp, idx) => {
+            const project = icT89Projects[idx % icT89Projects.length];
+            for (let w = 0; w < Math.min(5, weeks.length); w++) {
+                addTask(emp.id, weeks[w].key, 'projekt',
+                    `${project.name} (${project.number})`, 'T89');
+            }
+        });
+
+        // === AS Team: DPQ and AFS projects ===
+        const afsProjects = CONFIG.demoProjects.AFS;
+
+        asTeam.forEach((emp, idx) => {
+            // First half: DPQ
+            if (idx < 3) {
+                const project = icDPQProjects[idx % icDPQProjects.length];
+                for (let w = 0; w < Math.min(4, weeks.length); w++) {
+                    addTask(emp.id, weeks[w].key, 'projekt',
+                        `${project.name} (${project.number})`, 'DPQ');
+                }
+            }
+            // Second half: AFS
+            else {
+                const project = afsProjects[(idx - 3) % afsProjects.length];
+                for (let w = 0; w < Math.min(4, weeks.length); w++) {
+                    addTask(emp.id, weeks[w].key, 'support',
+                        `${project.name} (${project.number})`, 'AFS');
+                }
+            }
+        });
+
+        // === F4500 / EmelyEstate - add to some free slots ===
+        const emelyProject = CONFIG.demoProjects.F4500[0];
+        // Assign to 2 IC team members in later weeks
+        if (icTeam.length >= 2 && weeks.length > 6) {
+            addTask(icTeam[0].id, weeks[7].key, 'projekt',
+                `${emelyProject.name} (${emelyProject.number})`, 'F4500');
+            addTask(icTeam[1].id, weeks[7].key, 'projekt',
+                `${emelyProject.name} (${emelyProject.number})`, 'F4500');
+        }
+
+        // === Trainings over 3 months (12 weeks) ===
+        const allEmployees = State.employees;
+        const trainings = CONFIG.demoTrainings;
+
+        // Distribute trainings: one per team area, every 3 weeks
+        const trainingWeeks = [2, 5, 8, 11].filter(w => w < weeks.length);
+
+        trainingWeeks.forEach((weekIdx, tIdx) => {
+            const training = trainings[tIdx % trainings.length];
+            const weekKey = weeks[weekIdx].key;
+
+            // Find 2 available trainers from different teams
+            let trainersAssigned = 0;
+            for (const emp of allEmployees) {
+                if (trainersAssigned >= training.trainers) break;
+                if (isSlotFree(emp.id, weekKey)) {
+                    addTask(emp.id, weekKey, 'training', training.name);
+                    trainersAssigned++;
+                }
+            }
+        });
+
+        // === Hotline Rotation for AS Team ===
+        // One AS team member per week, rotating
+        asTeam.forEach((emp, idx) => {
+            // Each AS member gets hotline duty in rotation
+            const weekIdx = idx % weeks.length;
+            if (weekIdx < weeks.length) {
+                // Find a free slot for this rotation
+                for (let w = weekIdx; w < weeks.length; w += asTeam.length) {
+                    if (isSlotFree(emp.id, weeks[w].key)) {
+                        addTask(emp.id, weeks[w].key, 'support', 'Hotline-Rotation AS');
+                        break; // Only one rotation assignment per employee visible
+                    }
+                }
+            }
+        });
+
+        // Fill Hotline team with support tasks
+        hotlineTeam.forEach((emp, idx) => {
+            for (let w = 0; w < Math.min(8, weeks.length); w++) {
+                addTask(emp.id, weeks[w].key, 'support', 'Support & Wartung');
+            }
+        });
+
+        console.log(`Generated ${State.tasks.length} demo tasks`);
     },
 
     /**
@@ -281,9 +492,10 @@ const DataManager = {
      * @param {string} week
      * @param {string} type
      * @param {string} desc
+     * @param {string|null} category
      * @returns {boolean}
      */
-    addTask(empId, week, type, desc) {
+    addTask(empId, week, type, desc, category = null) {
         // Validate employee exists
         const employee = State.employees.find(e => e.id === empId);
         if (!employee) {
@@ -301,13 +513,19 @@ const DataManager = {
         // Sanitize description
         const sanitizedDesc = this.sanitizeInput(desc);
 
-        State.tasks.push({
+        const task = {
             id: Date.now() + Math.random(),
             empId,
             week,
             type,
             desc: sanitizedDesc
-        });
+        };
+
+        if (category) {
+            task.category = category;
+        }
+
+        State.tasks.push(task);
 
         this.save();
         Toast.show('Eintrag gespeichert.', 'success');
@@ -424,6 +642,9 @@ const Renderer = {
                 if (task) {
                     const div = document.createElement('div');
                     div.className = `task type-${task.type}`;
+                    if (task.category) {
+                        div.classList.add(`category-${task.category}`);
+                    }
                     div.textContent = task.desc || this.getTaskTypeLabel(task.type);
                     div.setAttribute('role', 'button');
                     div.setAttribute('tabindex', '0');
@@ -519,6 +740,17 @@ const Modal = {
                 this.save();
             });
         }
+
+        // Show/hide category based on task type
+        const taskTypeSelect = document.getElementById('taskType');
+        const categoryGroup = document.getElementById('categoryGroup');
+        if (taskTypeSelect && categoryGroup) {
+            taskTypeSelect.addEventListener('change', () => {
+                categoryGroup.style.display =
+                    (taskTypeSelect.value === 'projekt' || taskTypeSelect.value === 'support')
+                        ? 'block' : 'none';
+            });
+        }
     },
 
     /**
@@ -533,6 +765,12 @@ const Modal = {
         document.getElementById('selectedWeek').value = weekKey;
         document.getElementById('taskDesc').value = '';
         document.getElementById('taskType').selectedIndex = 0;
+
+        // Reset and show category for default type (projekt)
+        const categorySelect = document.getElementById('taskCategory');
+        const categoryGroup = document.getElementById('categoryGroup');
+        if (categorySelect) categorySelect.selectedIndex = 0;
+        if (categoryGroup) categoryGroup.style.display = 'block';
 
         this.element.classList.add('active');
 
@@ -558,13 +796,15 @@ const Modal = {
         const week = document.getElementById('selectedWeek').value;
         const type = document.getElementById('taskType').value;
         const desc = document.getElementById('taskDesc').value.trim();
+        const categoryEl = document.getElementById('taskCategory');
+        const category = categoryEl ? categoryEl.value : null;
 
         if (isNaN(empId) || !week) {
             Toast.show('Ungültige Daten.', 'error');
             return;
         }
 
-        if (DataManager.addTask(empId, week, type, desc)) {
+        if (DataManager.addTask(empId, week, type, desc, category)) {
             this.close();
             Renderer.renderBody();
         }
