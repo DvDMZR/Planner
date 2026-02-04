@@ -1,73 +1,130 @@
-# React + TypeScript + Vite
+# Team Ressourcen Planer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **Version 0.7.1** | Web-basiertes Tool zur Visualisierung und Verwaltung von Team-Verfügbarkeiten
 
-Currently, two official plugins are available:
+![Status](https://img.shields.io/badge/Status-Prototype-blue)
+![Version](https://img.shields.io/badge/Version-0.7.1-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## React Compiler
+## Überblick
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Der **Team Ressourcen Planer** ist eine leichtgewichtige Web-Anwendung zur visuellen Planung von Mitarbeiter-Ressourcen über einen 12-Wochen-Zeitraum. Ideal für kleine bis mittlere Teams, die einen schnellen Überblick über Verfügbarkeiten und Aufgabenzuweisungen benötigen.
 
-## Expanding the ESLint configuration
+### Hauptfunktionen
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+| Feature | Beschreibung |
+|---------|--------------|
+| **Timeline-Ansicht** | 12-Wochen-Übersicht mit Hervorhebung der aktuellen Woche |
+| **Team-Organisation** | Mitarbeiter nach Teams gruppiert (Development, Sales, Consulting, Marketing) |
+| **Aufgabentypen** | Projektarbeit, Support/Wartung, Dienstreise, Training |
+| **Lokale Speicherung** | Daten werden im Browser gespeichert (localStorage) |
+| **Responsive Design** | Optimiert für Desktop, Tablet und Mobile |
+| **Barrierefreiheit** | ARIA-Labels, Tastaturnavigation, Screen-Reader-Support |
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Schnellstart
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Option 1: Direkt öffnen
+```bash
+# Einfach die index.html im Browser öffnen
+open index.html
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Option 2: Mit lokalem Server
+```bash
+# Mit npm serve
+npx serve .
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Oder mit Python
+python -m http.server 8000
 ```
+
+---
+
+## Bedienung
+
+| Aktion | Beschreibung |
+|--------|--------------|
+| **Klick auf leere Zelle** | Neuen Eintrag erstellen |
+| **Klick auf Eintrag** | Eintrag löschen |
+| **ESC-Taste** | Dialog schließen |
+| **Tab-Taste** | Durch Elemente navigieren |
+| **Enter/Leertaste** | Element aktivieren |
+
+---
+
+## Projektstruktur
+
+```
+Planner/
+├── index.html      # Haupt-HTML-Datei
+├── styles.css      # Alle CSS-Styles
+├── app.js          # Anwendungslogik (modular)
+├── package.json    # Projektmetadaten & Version
+└── README.md       # Diese Dokumentation
+```
+
+---
+
+## Technologie-Stack
+
+- **Frontend:** Vanilla JavaScript (ES6+), CSS3, HTML5
+- **Speicherung:** Browser localStorage
+- **Abhängigkeiten:** Keine externen Libraries
+
+---
+
+## Roadmap
+
+### Geplante Features (v1.0)
+
+- [ ] Daten-Export (CSV, JSON)
+- [ ] Daten-Import
+- [ ] Suchfunktion
+- [ ] Filter nach Team/Aufgabentyp
+- [ ] Aufgaben bearbeiten (nicht nur löschen)
+- [ ] Konflikt-Erkennung (Doppelbuchungen)
+
+### Zukünftige Ideen
+
+- [ ] Backend-Integration
+- [ ] Multi-User Support
+- [ ] Auslastungsberichte
+- [ ] Dark Mode
+- [ ] Kalender-Integration
+
+---
+
+## Changelog
+
+### v0.7.1 (aktuell)
+- Code in separate Dateien aufgeteilt (HTML, CSS, JS)
+- Modulare JavaScript-Architektur
+- Barrierefreiheit verbessert (ARIA, Keyboard-Navigation)
+- Responsive Design implementiert
+- Toast-Benachrichtigungen hinzugefügt
+- Fehlerbehandlung verbessert
+- Print-Styles hinzugefügt
+- Reduced-Motion Support
+
+### v0.7.0
+- Initiale Prototype-Version
+- Basis-Timeline-Ansicht
+- Lokale Datenspeicherung
+
+---
+
+## Lizenz
+
+MIT License - Frei verwendbar für private und kommerzielle Projekte.
+
+---
+
+<div align="center">
+
+**Made with** ☕ **for better team planning**
+
+</div>
