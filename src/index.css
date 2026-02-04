@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 210 25% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 25% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 25% 15%;
+    /* GEA Blue: #0069B4 = hsl(200, 100%, 35%) */
+    --primary: 200 100% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 20% 95%;
+    --secondary-foreground: 210 25% 15%;
+    --muted: 200 15% 95%;
+    --muted-foreground: 200 10% 45%;
+    --accent: 200 20% 92%;
+    --accent-foreground: 210 25% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    /* Make borders more visible */
+    --border: 200 20% 80%;
+    --input: 200 20% 85%;
+    --ring: 200 100% 35%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 210 25% 8%;
+    --foreground: 0 0% 95%;
+    --card: 210 25% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 210 25% 10%;
+    --popover-foreground: 0 0% 95%;
+    /* GEA Blue for dark mode */
+    --primary: 200 90% 50%;
+    --primary-foreground: 210 25% 8%;
+    --secondary: 200 20% 18%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 200 15% 18%;
+    --muted-foreground: 200 10% 60%;
+    --accent: 200 20% 18%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62.8% 45%;
+    --destructive-foreground: 0 0% 100%;
+    /* Make borders more visible in dark mode */
+    --border: 200 15% 25%;
+    --input: 200 15% 22%;
+    --ring: 200 90% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    min-height: 100vh;
+  }
+  #root {
+    min-height: 100vh;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-muted-foreground/50;
+}
+
+/* Enhanced grid lines for calendar/timeline views */
+.border-border {
+  border-color: hsl(var(--border));
+}
