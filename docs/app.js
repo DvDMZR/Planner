@@ -30,19 +30,16 @@ const CONFIG = {
     // Demo Data
     demoEmployees: {
         'IC Team': [
-            'Anna Schmidt', 'Max Weber', 'Lisa Müller', 'Tom Fischer',
-            'Sarah Koch', 'Jan Becker'
+            'IC-MA 1', 'IC-MA 2', 'IC-MA 3', 'IC-MA 4', 'IC-MA 5', 'IC-MA 6'
         ],
         'CMS Team': [
-            'Nina Hoffmann', 'Paul Wagner', 'Emma Schulz', 'Felix Braun',
-            'Laura Klein'
+            'CMS-MA 1', 'CMS-MA 2', 'CMS-MA 3', 'CMS-MA 4', 'CMS-MA 5'
         ],
         'AS Team': [
-            'David Meyer', 'Julia Richter', 'Kevin Wolf', 'Marie Schäfer',
-            'Tim Neumann', 'Lena Zimmermann'
+            'AS-MA 1', 'AS-MA 2', 'AS-MA 3', 'AS-MA 4', 'AS-MA 5', 'AS-MA 6'
         ],
         'HM Team': [
-            'Chris Hartmann', 'Sophie Krüger', 'Lukas Lange', 'Hannah Schmitt'
+            'HM-MA 1', 'HM-MA 2', 'HM-MA 3', 'HM-MA 4'
         ]
     },
 
