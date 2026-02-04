@@ -11,7 +11,7 @@
 // ============================================
 const CONFIG = {
     version: '0.8.0',
-    teams: ['IC Team', 'CMS Team', 'AS Team', 'Hotline'],
+    teams: ['IC Team', 'CMS Team', 'AS Team', 'HM Team'],
     weeksToShow: 12,
     storageKeys: {
         employees: 'planer_employees',
@@ -41,7 +41,7 @@ const CONFIG = {
             'David Meyer', 'Julia Richter', 'Kevin Wolf', 'Marie Schäfer',
             'Tim Neumann', 'Lena Zimmermann'
         ],
-        'Hotline': [
+        'HM Team': [
             'Chris Hartmann', 'Sophie Krüger', 'Lukas Lange', 'Hannah Schmitt'
         ]
     },
@@ -67,13 +67,28 @@ const CONFIG = {
         ]
     },
 
-    // Demo Trainings
-    demoTrainings: [
-        { name: 'Agile Workshop', trainers: 2 },
-        { name: 'Security Training', trainers: 2 },
-        { name: 'Cloud Zertifizierung', trainers: 2 },
-        { name: 'Leadership Seminar', trainers: 2 }
-    ]
+    // Trainings by Team (trainers = number of trainers needed)
+    demoTrainings: {
+        'AS Team': [
+            { name: 'R9500 I&C', trainers: 2 },
+            { name: 'R9500 S&T', trainers: 2 },
+            { name: 'F4500 I&C', trainers: 2 },
+            { name: 'F4500 S&T', trainers: 2 },
+            { name: 'DPQ', trainers: 2 }
+        ],
+        'CMS Team': [
+            { name: 'T8900', trainers: 2 },
+            { name: 'T8600', trainers: 2 },
+            { name: 'DPX', trainers: 2 },
+            { name: 'CowScout', trainers: 2 }
+        ],
+        'HM Team': [
+            { name: 'DairyNet', trainers: 2 },
+            { name: 'DairyPlan', trainers: 2 },
+            { name: 'Good Cow Feeding', trainers: 2 },
+            { name: 'Good Cow Milking', trainers: 2 }
+        ]
+    }
 };
 
 // ============================================
@@ -305,7 +320,7 @@ const DataManager = {
      * - IC Team: T89 and DPQ projects
      * - CMS Team: T89 projects
      * - AS Team: DPQ and AFS projects
-     * - Trainings distributed over 3 months
+     * - Trainings: Each team does their specific trainings (2 trainers each)
      * - Hotline rotation for AS team members
      */
     generateDemoTasks() {
@@ -340,7 +355,7 @@ const DataManager = {
         const icTeam = getTeamEmployees('IC Team');
         const cmsTeam = getTeamEmployees('CMS Team');
         const asTeam = getTeamEmployees('AS Team');
-        const hotlineTeam = getTeamEmployees('Hotline');
+        const hmTeam = getTeamEmployees('HM Team');
 
         // === IC Team: T89 and DPQ projects ===
         const icT89Projects = CONFIG.demoProjects.T89;
@@ -406,48 +421,54 @@ const DataManager = {
                 `${emelyProject.name} (${emelyProject.number})`, 'F4500');
         }
 
-        // === Trainings over 3 months (12 weeks) ===
-        const allEmployees = State.employees;
-        const trainings = CONFIG.demoTrainings;
+        // === Trainings: Team-specific trainings distributed over 12 weeks ===
+        // Each team does their own trainings, 2 trainers per training
+        const teamsWithTrainings = [
+            { team: asTeam, trainings: CONFIG.demoTrainings['AS Team'] || [] },
+            { team: cmsTeam, trainings: CONFIG.demoTrainings['CMS Team'] || [] },
+            { team: hmTeam, trainings: CONFIG.demoTrainings['HM Team'] || [] }
+        ];
 
-        // Distribute trainings: one per team area, every 3 weeks
-        const trainingWeeks = [2, 5, 8, 11].filter(w => w < weeks.length);
+        teamsWithTrainings.forEach(({ team, trainings }) => {
+            if (!trainings.length || !team.length) return;
 
-        trainingWeeks.forEach((weekIdx, tIdx) => {
-            const training = trainings[tIdx % trainings.length];
-            const weekKey = weeks[weekIdx].key;
+            // Distribute trainings across 12 weeks
+            trainings.forEach((training, tIdx) => {
+                // Spread trainings across weeks (every 2-3 weeks per team)
+                const weekIdx = (tIdx * 3) % weeks.length;
+                if (weekIdx >= weeks.length) return;
 
-            // Find 2 available trainers from different teams
-            let trainersAssigned = 0;
-            for (const emp of allEmployees) {
-                if (trainersAssigned >= training.trainers) break;
-                if (isSlotFree(emp.id, weekKey)) {
-                    addTask(emp.id, weekKey, 'training', training.name);
-                    trainersAssigned++;
+                const weekKey = weeks[weekIdx].key;
+
+                // Find 2 trainers from this team
+                let trainersAssigned = 0;
+                for (const emp of team) {
+                    if (trainersAssigned >= training.trainers) break;
+                    if (isSlotFree(emp.id, weekKey)) {
+                        addTask(emp.id, weekKey, 'training', training.name);
+                        trainersAssigned++;
+                    }
                 }
-            }
+            });
         });
 
         // === Hotline Rotation for AS Team ===
-        // One AS team member per week, rotating
+        // One AS team member per week, rotating through free slots
         asTeam.forEach((emp, idx) => {
             // Each AS member gets hotline duty in rotation
-            const weekIdx = idx % weeks.length;
-            if (weekIdx < weeks.length) {
-                // Find a free slot for this rotation
-                for (let w = weekIdx; w < weeks.length; w += asTeam.length) {
-                    if (isSlotFree(emp.id, weeks[w].key)) {
-                        addTask(emp.id, weeks[w].key, 'support', 'Hotline-Rotation AS');
-                        break; // Only one rotation assignment per employee visible
-                    }
+            for (let w = idx; w < weeks.length; w += asTeam.length) {
+                if (isSlotFree(emp.id, weeks[w].key)) {
+                    addTask(emp.id, weeks[w].key, 'support', 'Hotline-Rotation AS');
                 }
             }
         });
 
-        // Fill Hotline team with support tasks
-        hotlineTeam.forEach((emp, idx) => {
-            for (let w = 0; w < Math.min(8, weeks.length); w++) {
-                addTask(emp.id, weeks[w].key, 'support', 'Support & Wartung');
+        // === HM Team: Support & Beratung tasks ===
+        hmTeam.forEach((emp) => {
+            for (let w = 0; w < weeks.length; w++) {
+                if (isSlotFree(emp.id, weeks[w].key)) {
+                    addTask(emp.id, weeks[w].key, 'support', 'Support & Beratung');
+                }
             }
         });
 
