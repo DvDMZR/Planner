@@ -15,14 +15,9 @@
         <h1>Team Ressourcen Planer <span id="version" class="version"></span></h1>
         <small>Daten werden lokal gespeichert | Klick auf Zelle zum Erstellen | Klick auf Eintrag zum Löschen | <kbd>ESC</kbd> schließt Dialoge</small>
     </div>
-    <div class="header-actions">
-        <button id="demoBtn" class="btn-demo" type="button" aria-label="Demo Daten laden">
-            DEMO DATEN LADEN
-        </button>
-        <button id="resetBtn" class="btn-reset" type="button" aria-label="Alle Daten löschen">
-            Daten löschen
-        </button>
-    </div>
+    <button id="resetBtn" class="btn-reset" type="button" aria-label="Alle Daten löschen">
+        Alle Daten löschen
+    </button>
 </header>
 
 <main>
@@ -53,19 +48,9 @@
                     <option value="training">Training / Schulung</option>
                 </select>
             </div>
-            <div class="form-group" id="categoryGroup" style="display:none;">
-                <label for="taskCategory">Kategorie</label>
-                <select id="taskCategory" name="taskCategory">
-                    <option value="">-- Keine --</option>
-                    <option value="T89">T89</option>
-                    <option value="DPQ">DPQ</option>
-                    <option value="F4500">F4500</option>
-                    <option value="AFS">AFS</option>
-                </select>
-            </div>
             <div class="form-group">
                 <label for="taskDesc">Beschreibung (z.B. Projektnummer)</label>
-                <input type="text" id="taskDesc" name="taskDesc" placeholder="z.B. CloudSync/89 (777-421-893)" maxlength="100" autocomplete="off">
+                <input type="text" id="taskDesc" name="taskDesc" placeholder="z.B. P-1234 Migration" maxlength="100" autocomplete="off">
             </div>
             <input type="hidden" id="selectedEmpId" name="selectedEmpId">
             <input type="hidden" id="selectedWeek" name="selectedWeek">
