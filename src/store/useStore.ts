@@ -16,6 +16,7 @@ import type {
   ProjectInvoice
 } from './types'
 import { getCurrentWeek } from '../lib/date-utils'
+import { saveImage, loadImage, deleteImage, isBase64DataUrl, generateImageId } from './imageStore'
 
 // Teams configuration - GEA-inspired color scheme
 export const TEAMS: Team[] = [
@@ -120,20 +121,44 @@ export const useStore = create<PlannerState>()(
       },
 
       // Employee actions
-      addEmployee: (employee) => set((state) => ({
-        employees: [...state.employees, { ...employee, id: generateId() }]
-      })),
+      addEmployee: (employee) => {
+        const newId = generateId()
+        // Externalize avatar image to IndexedDB if it's a base64 data URL
+        if (isBase64DataUrl(employee.avatarUrl)) {
+          const imageId = generateImageId(newId)
+          saveImage(imageId, employee.avatarUrl!).catch(console.error)
+          set((state) => ({
+            employees: [...state.employees, { ...employee, id: newId, avatarUrl: `idb://${imageId}` }]
+          }))
+        } else {
+          set((state) => ({
+            employees: [...state.employees, { ...employee, id: newId }]
+          }))
+        }
+      },
 
-      updateEmployee: (id, updates) => set((state) => ({
-        employees: state.employees.map((e) =>
-          e.id === id ? { ...e, ...updates } : e
-        )
-      })),
+      updateEmployee: (id, updates) => {
+        // Externalize avatar image to IndexedDB if it's a base64 data URL
+        if (isBase64DataUrl(updates.avatarUrl)) {
+          const imageId = generateImageId(id)
+          saveImage(imageId, updates.avatarUrl!).catch(console.error)
+          updates = { ...updates, avatarUrl: `idb://${imageId}` }
+        }
+        set((state) => ({
+          employees: state.employees.map((e) =>
+            e.id === id ? { ...e, ...updates } : e
+          )
+        }))
+      },
 
-      deleteEmployee: (id) => set((state) => ({
-        employees: state.employees.filter((e) => e.id !== id),
-        assignments: state.assignments.filter((a) => a.employeeId !== id)
-      })),
+      deleteEmployee: (id) => {
+        // Clean up externalized avatar image
+        deleteImage(generateImageId(id)).catch(console.error)
+        set((state) => ({
+          employees: state.employees.filter((e) => e.id !== id),
+          assignments: state.assignments.filter((a) => a.employeeId !== id)
+        }))
+      },
 
       // Project actions
       addProject: (project) => set((state) => ({
@@ -442,7 +467,17 @@ export const useStore = create<PlannerState>()(
     {
       name: 'planner-storage',
       partialize: (state) => ({
-        employees: state.employees,
+        // Strip base64 image data from employees before persisting to localStorage.
+        // Images are stored separately in IndexedDB via imageStore.ts.
+        employees: state.employees.map((emp) => {
+          if (isBase64DataUrl(emp.avatarUrl)) {
+            // This shouldn't happen after migration, but safeguard against it
+            const imageId = generateImageId(emp.id)
+            saveImage(imageId, emp.avatarUrl!).catch(console.error)
+            return { ...emp, avatarUrl: `idb://${imageId}` }
+          }
+          return emp
+        }),
         projects: state.projects,
         assignments: state.assignments,
         trainings: state.trainings,
